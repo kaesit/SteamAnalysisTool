@@ -1,15 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0f1115;
-  --color-surface: rgba(255, 255, 255, 0.03);
-  --color-surface-hover: rgba(255, 255, 255, 0.06);
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-primary: #8b5cf6;
-  --color-primary-hover: #7c3aed;
-  --color-accent: #0ea5e9;
-  
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --color-sys-black: #020408;
+  --color-sys-navy: #08101a;
+  --color-sys-blue: #1a2c47;
+  --color-sys-blue-light: #2b6cb0;
+  --color-sys-accent: #60a5fa;
+  --color-sys-text: #f1f5f9;
+  --color-sys-muted: #94a3b8;
+
+  --font-mono: 'Space Mono', 'Consolas', 'Courier New', monospace;
+  --font-sans: 'Inter', system-ui, sans-serif;
 }
 
 @layer base {
@@ -18,21 +19,82 @@
   }
 
   body {
-    @apply bg-[#0f1115] text-gray-300 font-sans antialiased selection:bg-primary/30 selection:text-white;
+    @apply bg-sys-black text-sys-text font-sans antialiased selection:bg-sys-blue-light/30 selection:text-white;
     margin: 0;
     overflow-x: hidden;
+    background-image: 
+      radial-gradient(circle at 50% 50%, rgba(8, 16, 26, 0.5) 0%, transparent 100%);
   }
 }
 
 @layer utilities {
-  .glass-panel {
-    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-xl;
+  .sys-panel {
+    @apply bg-sys-navy border border-sys-blue relative;
+    border-radius: 4px;
+    box-shadow: inset 0 0 40px rgba(2, 4, 8, 0.8);
+  }
+
+  .sys-panel-chamfered {
+    @apply bg-sys-navy relative;
+    clip-path: polygon(
+      16px 0, 100% 0, 
+      100% calc(100% - 16px), calc(100% - 16px) 100%, 
+      0 100%, 0 16px
+    );
+    padding: 1px;
   }
   
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-cyan-400;
+  .sys-panel-inner {
+    @apply bg-sys-black h-full w-full;
+    clip-path: polygon(
+      15px 0, 100% 0, 
+      100% calc(100% - 15px), calc(100% - 15px) 100%, 
+      0 100%, 0 15px
+    );
+  }
+
+  .cyno-panel {
+    @apply bg-sys-black relative z-0;
+    clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+  }
+  .cyno-panel::before {
+    content: '';
+    @apply absolute inset-0 bg-sys-blue z-[-1];
+    clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+  }
+  .cyno-panel::after {
+    content: '';
+    @apply absolute bg-sys-navy z-[-1];
+    inset: 1px;
+    clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+  }
+
+  .cyno-button {
+    @apply relative bg-sys-blue text-sys-text font-bold uppercase tracking-widest text-xs px-6 py-3 transition-all duration-200 z-0;
+    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
   }
   
+  .cyno-button:hover {
+    @apply bg-sys-blue-light text-white;
+  }
+
+  .cyno-button::before {
+    content: '';
+    @apply absolute inset-0 bg-sys-blue-light z-[-1];
+    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  }
+
+  .cyno-button::after {
+    content: '';
+    @apply absolute bg-sys-navy z-[-1] transition-colors duration-200;
+    inset: 1px;
+    clip-path: polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px);
+  }
+  
+  .cyno-button:hover::after {
+    @apply bg-sys-blue;
+  }
+
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }

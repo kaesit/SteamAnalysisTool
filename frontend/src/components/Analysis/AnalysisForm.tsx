@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Gamepad2, Tags, Calendar, DollarSign, Target, CheckCircle2 } from 'lucide-react';
+import { Terminal, Cpu, Database, Binary, AlertTriangle, CheckSquare } from 'lucide-react';
 
 export function AnalysisForm() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -8,58 +8,73 @@ export function AnalysisForm() {
   const handleAnalyze = (e: React.FormEvent) => {
     e.preventDefault();
     setIsAnalyzing(true);
-    // Simulate NLP processing time
     setTimeout(() => {
       setIsAnalyzing(false);
       setShowResult(true);
-    }, 2500);
+    }, 3000);
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-100 tracking-tight">New Game Analysis</h1>
-        <p className="text-gray-400 mt-1">Input your game details for NLP-powered market prediction</p>
+    <div className="animate-in fade-in duration-300 max-w-[1400px] mx-auto">
+      <div className="mb-10 flex justify-between items-end border-b-2 border-sys-blue pb-6">
+        <div>
+          <div className="flex items-center mb-2">
+            <div className="w-6 h-6 bg-sys-text mr-3 flex items-center justify-center rounded-sm">
+              <div className="w-2 h-2 bg-sys-black" />
+            </div>
+            <div className="text-sys-muted text-[10px] tracking-widest font-bold uppercase">MODULE: UPLINK_INIT_V2.1</div>
+          </div>
+          <h1 className="text-4xl font-bold text-sys-text tracking-widest uppercase">NEW ANALYSIS UPLINK</h1>
+        </div>
+        <div className="text-right bg-sys-navy p-4 border border-sys-blue relative">
+          <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-sys-text" />
+          <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-sys-text" />
+          <div className="text-[10px] text-sys-muted font-bold tracking-widest uppercase">AWAITING INPUT...</div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Form Section */}
-        <div className="lg:col-span-2">
-          <div className="glass-panel p-8">
+        <div className="xl:col-span-2">
+          <div className="cyno-panel p-8 md:p-10">
+            <div className="flex items-center mb-8 border-b border-sys-blue pb-4">
+               <Terminal className="w-5 h-5 text-sys-accent mr-3" />
+               <h2 className="text-sm font-bold text-sys-text tracking-widest uppercase">CONFIGURE ENTITY PARAMETERS</h2>
+            </div>
             <form onSubmit={handleAnalyze} className="space-y-6">
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                    <Gamepad2 className="w-4 h-4 mr-2 text-violet-400" />
-                    Game Title
+                  <label className="block text-[11px] font-bold text-sys-muted mb-2 uppercase tracking-widest">
+                    [01] ENTITY IDENTIFIER
                   </label>
                   <input 
                     type="text" 
                     required
-                    placeholder="e.g. Project Nova" 
-                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-gray-200 placeholder-gray-600 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all"
+                    placeholder="e.g. PROJECT_NOVA" 
+                    className="w-full bg-sys-black border border-sys-blue p-4 text-sys-text placeholder-sys-navy focus:outline-none focus:border-sys-accent transition-colors uppercase font-mono text-sm rounded-sm"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                      <Target className="w-4 h-4 mr-2 text-cyan-400" />
-                      Primary Genre
+                    <label className="block text-[11px] font-bold text-sys-muted mb-2 uppercase tracking-widest">
+                      [02] PRIMARY CLASSIFICATION
                     </label>
-                    <select className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-gray-200 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all appearance-none">
-                      <option value="action">Action</option>
-                      <option value="rpg">RPG</option>
-                      <option value="strategy">Strategy</option>
-                      <option value="simulation">Simulation</option>
-                      <option value="adventure">Adventure</option>
-                    </select>
+                    <div className="relative">
+                      <select className="w-full bg-sys-black border border-sys-blue p-4 text-sys-text focus:outline-none focus:border-sys-accent transition-colors uppercase font-mono text-sm appearance-none rounded-sm">
+                        <option value="action">ACTION</option>
+                        <option value="rpg">RPG</option>
+                        <option value="strategy">STRATEGY</option>
+                        <option value="simulation">SIMULATION</option>
+                        <option value="adventure">ADVENTURE</option>
+                      </select>
+                      <div className="absolute right-4 top-4 text-sys-accent pointer-events-none">▼</div>
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                      <DollarSign className="w-4 h-4 mr-2 text-emerald-400" />
-                      Target Price (USD)
+                    <label className="block text-[11px] font-bold text-sys-muted mb-2 uppercase tracking-widest">
+                      [03] FINANCIAL TARGET (USD)
                     </label>
                     <input 
                       type="number" 
@@ -67,54 +82,52 @@ export function AnalysisForm() {
                       step="0.01"
                       required
                       placeholder="19.99" 
-                      className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-gray-200 placeholder-gray-600 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all"
+                      className="w-full bg-sys-black border border-sys-blue p-4 text-sys-accent placeholder-sys-navy focus:outline-none focus:border-sys-accent transition-colors font-mono text-sm rounded-sm"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                    <Tags className="w-4 h-4 mr-2 text-fuchsia-400" />
-                    Steam Tags (comma separated)
+                  <label className="block text-[11px] font-bold text-sys-muted mb-2 uppercase tracking-widest">
+                    [04] META TAGS (CSV)
                   </label>
                   <input 
                     type="text" 
-                    placeholder="e.g. Singleplayer, Story Rich, Atmospheric" 
-                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-gray-200 placeholder-gray-600 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all"
+                    placeholder="SINGLEPLAYER, STORY_RICH, ATMOSPHERIC" 
+                    className="w-full bg-sys-black border border-sys-blue p-4 text-sys-text placeholder-sys-navy focus:outline-none focus:border-sys-accent transition-colors uppercase font-mono text-sm rounded-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center">
-                    <Calendar className="w-4 h-4 mr-2 text-orange-400" />
-                    Target Release Date
+                  <label className="block text-[11px] font-bold text-sys-muted mb-2 uppercase tracking-widest">
+                    [05] ESTIMATED DEPLOYMENT
                   </label>
                   <input 
                     type="date" 
-                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-gray-200 placeholder-gray-600 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all [color-scheme:dark]"
+                    className="w-full bg-sys-black border border-sys-blue p-4 text-sys-text focus:outline-none focus:border-sys-accent transition-colors uppercase font-mono text-sm rounded-sm [color-scheme:dark]"
                   />
                 </div>
               </div>
 
-              <div className="pt-4">
+              <div className="pt-8 border-t border-sys-blue">
                 <button 
                   type="submit"
                   disabled={isAnalyzing}
-                  className={`w-full py-4 rounded-xl font-bold text-white flex items-center justify-center transition-all ${
+                  className={`w-full py-5 flex items-center justify-center transition-all ${
                     isAnalyzing 
-                      ? 'bg-violet-600/50 cursor-not-allowed' 
-                      : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_25px_rgba(139,92,246,0.5)]'
+                      ? 'bg-sys-black text-sys-muted border-2 border-sys-navy cursor-not-allowed' 
+                      : 'cyno-button'
                   }`}
                 >
                   {isAnalyzing ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3" />
-                      Analyzing via BERT Model...
+                      <div className="w-5 h-5 border-2 border-sys-muted border-t-sys-text animate-spin mr-4" />
+                      <span className="tracking-widest font-bold text-sm">EXECUTING NLP PROTOCOLS...</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-5 h-5 mr-2" />
-                      Generate Oracle Report
+                      <Cpu className="w-5 h-5 mr-3" />
+                      <span className="tracking-widest font-bold text-sm">INITIALIZE UPLINK & ANALYZE</span>
                     </>
                   )}
                 </button>
@@ -124,57 +137,64 @@ export function AnalysisForm() {
         </div>
 
         {/* Results Panel */}
-        <div className="lg:col-span-1">
+        <div className="xl:col-span-1">
           {showResult ? (
-            <div className="glass-panel p-6 animate-in fade-in slide-in-from-right-8 duration-500 relative overflow-hidden h-full flex flex-col">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-cyan-400" />
-              
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-100">Analysis Complete</h3>
-                  <p className="text-xs text-gray-400">Confidence Score: 89%</p>
+            <div className="cyno-panel p-8 h-full flex flex-col animate-in fade-in slide-in-from-right-4 relative min-h-[500px]">
+              <div className="absolute top-0 left-0 w-full h-1 bg-sys-accent" />
+              <div className="flex items-start justify-between mb-8 border-b border-sys-blue pb-6">
+                <div className="flex items-center">
+                  <CheckSquare className="w-6 h-6 text-sys-accent mr-3" />
+                  <div>
+                    <h3 className="font-bold text-sys-text uppercase tracking-widest text-sm">ANALYSIS COMPLETE</h3>
+                    <p className="text-[10px] text-sys-muted font-bold tracking-widest mt-1">CONFIDENCE: 89.4%</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-6 flex-1">
+              <div className="space-y-8 flex-1">
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">Predicted Success Rate</p>
-                  <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-                    76.4%
+                  <p className="text-[10px] text-sys-muted font-bold mb-2 uppercase tracking-widest">PREDICTED SUCCESS METRIC</p>
+                  <div className="text-6xl font-bold text-sys-accent font-mono tracking-tighter">
+                    76.4<span className="text-3xl">%</span>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium text-gray-300">Price Optimization</span>
-                      <span className="text-xs text-emerald-400">Good</span>
+                <div className="space-y-4 pt-6 border-t border-sys-blue">
+                  <div className="bg-sys-black border border-sys-blue p-4 rounded-sm">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-xs font-bold text-sys-text uppercase tracking-widest flex items-center">
+                        <Binary className="w-4 h-4 mr-2 text-sys-muted" /> PRICE OPTIMIZATION
+                      </span>
+                      <span className="text-[10px] font-bold text-sys-accent border border-sys-accent px-2 py-0.5">NOMINAL</span>
                     </div>
-                    <p className="text-xs text-gray-500">Your price is 15% lower than similar successful titles.</p>
+                    <p className="text-xs text-sys-muted font-bold tracking-widest leading-relaxed uppercase font-mono">
+                      TARGET PRICE IS 15% LOWER THAN SUCCESSFUL COMPARABLES IN ACTIVE DB.
+                    </p>
                   </div>
                   
-                  <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium text-gray-300">Genre Saturation</span>
-                      <span className="text-xs text-rose-400">High Risk</span>
+                  <div className="bg-sys-black border border-[#ef4444] p-4 rounded-sm">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-xs font-bold text-[#ef4444] uppercase tracking-widest flex items-center">
+                        <AlertTriangle className="w-4 h-4 mr-2" /> GENRE SATURATION
+                      </span>
+                      <span className="text-[10px] font-bold text-sys-black bg-[#ef4444] px-2 py-0.5 animate-pulse">CRITICAL</span>
                     </div>
-                    <p className="text-xs text-gray-500">Action RPG market is highly saturated. Ensure unique selling points.</p>
+                    <p className="text-xs text-sys-muted font-bold tracking-widest leading-relaxed uppercase font-mono">
+                      ACTION RPG SECTOR HIGHLY SATURATED. UNIQUE SELLING PROPOSITION REQUIRED.
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <button className="w-full mt-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-gray-200 font-medium border border-white/10 transition-colors text-sm flex items-center justify-center">
-                Export Detailed Report
+              <button className="cyno-button w-full mt-8">
+                DOWNLOAD FULL TELEMETRY
               </button>
             </div>
           ) : (
-            <div className="glass-panel p-6 h-full flex flex-col items-center justify-center text-center opacity-50">
-              <Sparkles className="w-12 h-12 text-gray-600 mb-4" />
-              <p className="text-gray-400 text-sm">
-                Fill out the game details and click generate to see the AI market analysis report.
+             <div className="cyno-panel p-8 h-full flex flex-col items-center justify-center text-center opacity-60 min-h-[500px]">
+              <Database className="w-16 h-16 text-sys-blue mb-6" />
+              <p className="text-xs text-sys-muted font-bold uppercase tracking-widest leading-loose">
+                STANDBY MODE.<br/>AWAITING ENTITY PARAMETERS<br/>FOR NLP PROCESSING.
               </p>
             </div>
           )}

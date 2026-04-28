@@ -1,71 +1,73 @@
-import { TrendingUp, Activity, Gamepad2, AlertTriangle } from 'lucide-react';
+import { Crosshair, ActivitySquare, Cpu, AlertTriangle } from 'lucide-react';
 
 export function KpiCards() {
   const kpis = [
     {
-      title: "Total Games Analyzed",
+      id: "ALPHA",
+      title: "TOTAL DATA PROCESSED",
       value: "14,205",
-      change: "+12%",
+      change: "+12.4%",
       trend: "up",
-      icon: Gamepad2,
-      color: "from-violet-500 to-fuchsia-500",
-      bgBase: "bg-violet-500/10"
+      icon: Cpu,
+      color: "text-sys-accent",
     },
     {
-      title: "Avg Success Predict",
+      id: "BRAVO",
+      title: "PREDICTIVE SUCCESS",
       value: "68.4%",
       change: "+2.4%",
       trend: "up",
-      icon: TrendingUp,
-      color: "from-emerald-400 to-cyan-400",
-      bgBase: "bg-emerald-500/10"
+      icon: Crosshair,
+      color: "text-sys-text",
     },
     {
-      title: "Market Sentiment",
-      value: "Positive",
-      change: "Stable",
+      id: "SIERRA",
+      title: "GLOBAL SENTIMENT",
+      value: "STABLE",
+      change: "0.0%",
       trend: "neutral",
-      icon: Activity,
-      color: "from-blue-400 to-indigo-500",
-      bgBase: "bg-blue-500/10"
+      icon: ActivitySquare,
+      color: "text-sys-text",
     },
     {
-      title: "High Risk Genres",
+      id: "VICTOR",
+      title: "CRITICAL RISK ZONES",
       value: "3",
-      change: "Action, MMO",
+      change: "MMO, ACT",
       trend: "down",
       icon: AlertTriangle,
-      color: "from-rose-400 to-orange-400",
-      bgBase: "bg-rose-500/10"
+      color: "text-[#ef4444]",
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-4 gap-6 mb-10">
       {kpis.map((kpi, idx) => {
         const Icon = kpi.icon;
         return (
-          <div key={idx} className="glass-panel p-6 relative group overflow-hidden transition-transform duration-300 hover:-translate-y-1">
-            <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full blur-2xl opacity-20 bg-gradient-to-br ${kpi.color} group-hover:opacity-40 transition-opacity duration-500`} />
-            
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <p className="text-gray-400 text-sm font-medium mb-1">{kpi.title}</p>
-                <h3 className="text-3xl font-bold text-gray-100 tracking-tight">{kpi.value}</h3>
+          <div key={idx} className="cyno-panel p-6 flex flex-col justify-between min-h-[140px] group transition-transform hover:-translate-y-1">
+            <div className="flex justify-between items-start mb-4 gap-2">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-sys-black border border-sys-blue flex items-center justify-center mr-3 shrink-0 rounded-sm">
+                  <Icon className={`w-4 h-4 ${kpi.color}`} />
+                </div>
+                <div className="text-xs text-sys-muted font-bold tracking-widest uppercase leading-snug">{kpi.title}</div>
               </div>
-              <div className={`p-3 rounded-xl ${kpi.bgBase}`}>
-                <Icon className={`w-6 h-6 text-transparent bg-clip-text bg-gradient-to-br ${kpi.color}`} style={{ color: 'white' }} />
+              <div className="text-[10px] text-sys-muted font-bold tracking-widest bg-sys-black px-2 py-1 border border-sys-blue shrink-0 rounded-sm">
+                {kpi.id}
               </div>
             </div>
             
-            <div className="flex items-center text-sm">
-              <span className={`font-medium ${
-                kpi.trend === 'up' ? 'text-emerald-400' : 
-                kpi.trend === 'down' ? 'text-rose-400' : 'text-gray-400'
-              }`}>
-                {kpi.change}
-              </span>
-              <span className="text-gray-500 ml-2">vs last month</span>
+            <div className="flex items-center justify-between mt-auto">
+              <h3 className="text-3xl font-bold text-sys-text tracking-wider font-mono">{kpi.value}</h3>
+              <div className="flex items-center text-xs font-mono tracking-wider font-bold bg-sys-black px-2 py-1 border border-sys-blue rounded-sm">
+                <span className={`${
+                  kpi.trend === 'up' ? 'text-sys-accent' : 
+                  kpi.trend === 'down' ? 'text-[#ef4444]' : 'text-sys-muted'
+                }`}>
+                  {kpi.trend === 'up' ? '▲' : kpi.trend === 'down' ? '▼' : '■'} {kpi.change}
+                </span>
+              </div>
             </div>
           </div>
         );
