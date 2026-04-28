@@ -1,0 +1,55 @@
+Game Oracle 
+Developer: Berkay Sabuncu, Bilal Abiç, Esad Abdullah Kösedağ, Eren 
+Bozyer, Mert Can Yücedağ 
+Language: Python 3.12+ 
+1.Project Concept  
+Our main goal is developing an easy-to-use and efficient market analysis 
+tool for games that is produced in Türkiye. 
+The reason we need this kind of project is so simple, because in Türkiye 
+games are published or even made without any risk, market, customer, 
+genre analysis, so we want to fix it and make national games more visible 
+in international arena. 
+2.Objectives & Scope 
+Exploration of Data by using SteamWebAPI to have data of games such as 
+genre, price, localization, tags, release date, positive&negative reviews 
+for every short-term and long-term analysis.  
+Processing is the most important part, we’re going to fine-tune pre-
+trained NLP models to have more accurate precisions about market 
+analysis. 
+Visualization and Monitoring is the second most important part for 
+project, it is a keypoint to meet with end-user as we will provide 
+visuals with matplotlib and platform interface with django and streamlit 
+to have dynamic monitoring environment for customers 
+3.Technical Stack 
+Environment: Jupyter Notebook and Virtual Environment 
+Core Libraries: 
+ pandas -> Data Cleaning and Exploration 
+ numpy -> Mathematical Purposes 
+ scikit-learn -> Normalization and Modelization 
+ feature-engine -> New feature engineering 
+ matplotlib -> Visualization 
+ streamlit -> Fast prototyping 
+ django -> Interface 
+Data Collection: 
+The system will handle Data collection via SteamWebAPI, SteamSpy API for 
+spesifically game details, guessed sales, price and tags. 
+ 
+4. System Logic 
+Input: User inputs the details of the games that will be analyzed 
+Procces: System analyzes game details such as price genre release date 
+via fine-tuned LLM(BERT or LLama) and supports UX with visuals and 
+monitoring tools 
+Conculusion: Users can generate a report whenever they want to use it in 
+AI assistant to get help for better analysis 
+ 
+5.Project Timeline 
+ 
+ 
+6.Conclusion 
+In conclusion, the Game Oracle project aims to empower Turkish developers 
+and producers by providing a cutting-edge market analysis tool supported 
+by NLP and Steam Web API data. Transforming raw market data into 
+actionable strategies ultimately serves as a vital bridge, mitigating 
+market risks for local developers and enhancing the international 
+competitiveness of national game projects. 
+
