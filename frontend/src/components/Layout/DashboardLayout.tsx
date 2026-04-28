@@ -1,11 +1,12 @@
 import React from 'react';
 import { Sidebar } from '../Sidebar/Sidebar';
 import { Database, Search } from 'lucide-react';
+import { ViewType } from '../../App';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  currentView: 'overview' | 'analysis';
-  setCurrentView: (view: 'overview' | 'analysis') => void;
+  currentView: ViewType;
+  setCurrentView: (view: ViewType) => void;
 }
 
 export function DashboardLayout({ children, currentView, setCurrentView }: DashboardLayoutProps) {

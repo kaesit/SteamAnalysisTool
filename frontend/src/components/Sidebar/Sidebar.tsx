@@ -1,8 +1,9 @@
 import { LayoutDashboard, PlusCircle, FileText, BarChart3, Database } from 'lucide-react';
+import { ViewType } from '../../App';
 
 interface SidebarProps {
-  currentView: 'overview' | 'analysis';
-  setCurrentView: (view: 'overview' | 'analysis') => void;
+  currentView: ViewType;
+  setCurrentView: (view: ViewType) => void;
 }
 
 export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
@@ -38,7 +39,7 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
           return (
             <button
               key={item.id}
-              onClick={() => (item.id === 'overview' || item.id === 'analysis') && setCurrentView(item.id as any)}
+              onClick={() => setCurrentView(item.id as ViewType)}
               className={`w-full flex items-center px-4 py-3.5 transition-all duration-200 group relative ${
                 isActive 
                   ? 'bg-sys-navy text-sys-accent border-l-4 border-sys-accent' 
