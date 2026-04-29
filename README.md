@@ -16,8 +16,10 @@ Our system connects directly to the Steam Web API to process real-time game data
 ## 🛠️ Tech Stack
 
 - **Frontend:** React 19, Vite, Tailwind CSS v4, Lucide React, Recharts
-- **Backend (Planned):** Python 3.12+, FastAPI, Uvicorn
-- **Machine Learning (Planned):** `pandas`, `scikit-learn`, `feature-engine`, HuggingFace `transformers`
+- **Backend:** Python 3.12+, FastAPI, Uvicorn, Pydantic v2
+- **Data Processing:** `pandas`, `numpy`, `scikit-learn`, `feature-engine`
+- **APIs:** Steam Web API, SteamSpy API
+- **ML Ready:** Export to train HuggingFace `transformers` models
 
 ---
 
@@ -42,8 +44,94 @@ npm run dev
 
 The application will start on `http://localhost:5173`.
 
-### 3. Backend Setup (Coming Soon)
-The Python/Django backend is currently in the architecture planning phase. Once deployed, it will handle the heavy NLP processing and connect to the Steam APIs. Stay tuned!
+### 3. Backend Setup
+
+The Python backend handles Steam API integration, data collection, and NLP-ready data processing.
+
+#### Install Backend Dependencies
+```bash
+cd backend
+pip install -e .
+# or
+pip install -r requirements.txt
+```
+
+#### Start the API Server
+```bash
+python -m uvicorn main:app --reload
+```
+
+The API runs on `http://localhost:8000`
+
+#### Access API Documentation
+- **Interactive Docs (Swagger UI):** http://localhost:8000/docs
+- **Alternative Docs (ReDoc):** http://localhost:8000/redoc
+
+#### Quick API Test
+```bash
+# Search for a game
+curl -X POST http://localhost:8000/api/games/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Portal 2"}'
+
+# Collect game data
+curl -X POST http://localhost:8000/api/games/collect \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Portal 2", "max_reviews": 100}'
+```
+
+See [API_ENDPOINTS.md](backend/API_ENDPOINTS.md) for complete endpoint documentation.
+
+---
+
+## 🔌 API Quick Reference
+
+The backend exposes REST endpoints for game data collection:
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/health` | GET | API health check |
+| `/api/info` | GET | API metadata and capabilities |
+| `/api/games/search` | POST | Search for a game by title |
+| `/api/games/collect` | POST | Collect reviews and market data for a single game |
+| `/api/games/collect-batch` | POST | Batch process multiple games (1-10) |
+
+**Example Response (Single Game Collection):**
+```json
+{
+  "status": "success",
+  "total_reviews_collected": 46,
+  "positive_ratio": 0.9565,
+  "reviews_info": {
+    "row_count": 46,
+    "columns": ["review_text", "sentiment_score", "sentiment_label", ...]
+  },
+  "summary_info": {
+    "row_count": 1,
+    "columns": ["name", "price_usd", "positive_ratio", "estimated_owners_min", ...]
+  }
+}
+```
+
+### Using the API with Python
+
+```python
+import requests
+
+# Search for a game
+response = requests.post('http://localhost:8000/api/games/search',
+    json={'query': 'Portal 2'})
+game_data = response.json()
+
+# Collect game data
+response = requests.post('http://localhost:8000/api/games/collect',
+    json={'title': 'Portal 2', 'max_reviews': 200})
+data = response.json()
+
+# Access the data
+print(f"Collected {data['total_reviews_collected']} reviews")
+print(f"Positive ratio: {data['positive_ratio']:.1%}")
+```
 
 ---
 
