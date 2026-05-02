@@ -43,22 +43,22 @@ export function MarketCharts() {
             <AreaChart data={sentimentData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorPos" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#60a5fa" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#60a5fa" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="var(--color-sys-accent)" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="var(--color-sys-accent)" stopOpacity={0}/>
                 </linearGradient>
                 <linearGradient id="colorNeg" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
                   <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a2c47" vertical={true} />
-              <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
-              <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `${value / 1000}k`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-sys-blue)" vertical={true} />
+              <XAxis dataKey="name" stroke="var(--color-sys-muted)" fontSize={10} tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--color-sys-muted)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `${value / 1000}k`} />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#020408', border: '1px solid #1a2c47', borderRadius: '4px', color: '#f1f5f9' }}
+                contentStyle={{ backgroundColor: 'var(--color-sys-black)', border: '1px solid var(--color-sys-blue)', borderRadius: '4px', color: 'var(--color-sys-text)' }}
                 itemStyle={{ fontSize: '12px', fontFamily: 'monospace', fontWeight: 'bold' }}
               />
-              <Area type="monotone" dataKey="pos" stroke="#60a5fa" strokeWidth={2} fillOpacity={1} fill="url(#colorPos)" />
+              <Area type="monotone" dataKey="pos" stroke="var(--color-sys-accent)" strokeWidth={2} fillOpacity={1} fill="url(#colorPos)" />
               <Area type="monotone" dataKey="neg" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorNeg)" />
             </AreaChart>
           </ResponsiveContainer>
@@ -82,17 +82,17 @@ export function MarketCharts() {
         <div className="flex-1 w-full font-mono text-xs">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={genreData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a2c47" vertical={false} />
-              <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
-              <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-sys-blue)" vertical={false} />
+              <XAxis dataKey="name" stroke="var(--color-sys-muted)" fontSize={10} tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--color-sys-muted)" fontSize={10} tickLine={false} axisLine={false} />
               <Tooltip 
-                cursor={{ fill: 'rgba(26, 44, 71, 0.3)' }}
-                contentStyle={{ backgroundColor: '#020408', border: '1px solid #1a2c47', borderRadius: '4px', color: '#f1f5f9' }}
+                cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
+                contentStyle={{ backgroundColor: 'var(--color-sys-black)', border: '1px solid var(--color-sys-blue)', borderRadius: '4px', color: 'var(--color-sys-text)' }}
                 itemStyle={{ fontSize: '12px', fontFamily: 'monospace', fontWeight: 'bold' }}
               />
               <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '11px', fontWeight: 'bold' }} iconType="square" />
-              <Bar dataKey="active" name="ACTIVE NODES" fill="#60a5fa" radius={[2, 2, 0, 0]} />
-              <Bar dataKey="load" name="SECTOR LOAD" fill="#1a2c47" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="active" name="ACTIVE NODES" fill="var(--color-sys-accent)" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="load" name="SECTOR LOAD" fill="var(--color-sys-muted)" radius={[2, 2, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

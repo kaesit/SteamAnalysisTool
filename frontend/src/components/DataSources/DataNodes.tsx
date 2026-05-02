@@ -122,9 +122,9 @@ export function DataNodes() {
              <h2 className="text-sm font-bold text-sys-text tracking-widest uppercase">LIVE INGESTION STREAM</h2>
           </div>
           
-          <div className="flex-1 bg-[#010204] border border-sys-blue p-4 overflow-y-auto font-mono text-[11px] leading-loose">
+          <div className="flex-1 bg-sys-black border border-sys-blue p-4 overflow-y-auto font-mono text-[11px] leading-loose">
             {logs.map((log, i) => (
-              <div key={i} className={`${log.includes('WARNING') || log.includes('DEGRADED') ? 'text-[#ef4444]' : 'text-[#60a5fa]'} opacity-90`}>
+              <div key={i} className={`${log.includes('WARNING') || log.includes('DEGRADED') ? 'text-[#ef4444]' : 'text-sys-accent'} opacity-90`}>
                 {log}
               </div>
             ))}

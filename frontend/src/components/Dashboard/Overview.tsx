@@ -13,7 +13,7 @@ export function Overview() {
             </div>
             <div className="text-sys-muted text-[10px] tracking-[0.3em] font-bold uppercase">MODULE: DASH_OVERVIEW_V1.0</div>
           </div>
-          <h1 className="text-4xl font-bold text-sys-text tracking-[0.15em] uppercase">SECTOR OVERVIEW</h1>
+          <h1 className="text-4xl font-bold text-sys-text tracking-[0.15em] uppercase">DASHBOARD</h1>
         </div>
         <div className="text-right bg-sys-navy p-4 border-2 border-sys-blue relative">
           <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-sys-accent" />
@@ -25,7 +25,7 @@ export function Overview() {
           </div>
         </div>
       </div>
-      
+
       <KpiCards />
       <MarketCharts />
       <RecentAnalysisTable />

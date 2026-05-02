@@ -59,17 +59,17 @@ export function MarketTelemetry() {
           <div className="flex-1 w-full font-mono text-xs">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1a2c47" />
-                <XAxis type="number" dataKey="price" name="Price USD" unit="$" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis type="number" dataKey="reviews" name="Positive %" unit="%" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-sys-blue)" />
+                <XAxis type="number" dataKey="price" name="Price USD" unit="$" stroke="var(--color-sys-muted)" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis type="number" dataKey="reviews" name="Positive %" unit="%" stroke="var(--color-sys-muted)" fontSize={10} tickLine={false} axisLine={false} />
                 <RechartsTooltip 
                   cursor={{ strokeDasharray: '3 3' }} 
-                  contentStyle={{ backgroundColor: '#020408', border: '1px solid #1a2c47', borderRadius: '4px', color: '#f1f5f9' }}
+                  contentStyle={{ backgroundColor: 'var(--color-sys-black)', border: '1px solid var(--color-sys-blue)', borderRadius: '4px', color: 'var(--color-sys-text)' }}
                   itemStyle={{ fontSize: '12px', fontFamily: 'monospace', fontWeight: 'bold' }}
                 />
                 <Scatter name="Games" data={scatterData}>
                   {scatterData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.success === 1 ? '#60a5fa' : entry.success === -1 ? '#ef4444' : '#94a3b8'} />
+                    <Cell key={`cell-${index}`} fill={entry.success === 1 ? 'var(--color-sys-accent)' : entry.success === -1 ? '#ef4444' : 'var(--color-sys-muted)'} />
                   ))}
                 </Scatter>
               </ScatterChart>
@@ -90,11 +90,11 @@ export function MarketTelemetry() {
           <div className="flex-1 w-full font-mono text-xs">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trendData} margin={{ top: 20, right: 20, bottom: 20, left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1a2c47" vertical={false} />
-                <XAxis dataKey="month" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-sys-blue)" vertical={false} />
+                <XAxis dataKey="month" stroke="var(--color-sys-muted)" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="var(--color-sys-muted)" fontSize={10} tickLine={false} axisLine={false} />
                 <RechartsTooltip 
-                  contentStyle={{ backgroundColor: '#020408', border: '1px solid #1a2c47', borderRadius: '4px', color: '#f1f5f9' }}
+                  contentStyle={{ backgroundColor: 'var(--color-sys-black)', border: '1px solid var(--color-sys-blue)', borderRadius: '4px', color: 'var(--color-sys-text)' }}
                   itemStyle={{ fontSize: '12px', fontFamily: 'monospace', fontWeight: 'bold' }}
                 />
                 <Line type="monotone" dataKey="tags" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }} activeDot={{ r: 6 }} />

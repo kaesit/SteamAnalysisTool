@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  --color-sys-black: #020408;
-  --color-sys-navy: #08101a;
-  --color-sys-blue: #1a2c47;
-  --color-sys-blue-light: #2b6cb0;
-  --color-sys-accent: #60a5fa;
-  --color-sys-text: #f1f5f9;
-  --color-sys-muted: #94a3b8;
+  --color-sys-black: #FAF9F6;
+  --color-sys-navy: #F3F1EC;
+  --color-sys-blue: #2D2D2D;
+  --color-sys-blue-light: #4A4A4A;
+  --color-sys-accent: #1A1A1A;
+  --color-sys-text: #1C1B1B;
+  --color-sys-muted: #6B6B6B;
 
   --font-mono: 'Space Mono', 'Consolas', 'Courier New', monospace;
   --font-sans: 'Inter', system-ui, sans-serif;
@@ -15,23 +15,42 @@
 
 @layer base {
   :root {
+    color-scheme: light;
+  }
+
+  :root.dark {
     color-scheme: dark;
+    --color-sys-black: #161618;
+    --color-sys-navy: #1F1F22;
+    --color-sys-blue: #3E3E42;
+    --color-sys-blue-light: #5C5C60;
+    --color-sys-accent: #EAE6DF;
+    --color-sys-text: #EAE6DF;
+    --color-sys-muted: #8E8E93;
   }
 
   body {
-    @apply bg-sys-black text-sys-text font-sans antialiased selection:bg-sys-blue-light/30 selection:text-white;
+    @apply bg-sys-black text-sys-text font-sans antialiased selection:bg-sys-blue/10 selection:text-sys-text transition-colors duration-300;
     margin: 0;
     overflow-x: hidden;
     background-image: 
-      radial-gradient(circle at 50% 50%, rgba(8, 16, 26, 0.5) 0%, transparent 100%);
+      radial-gradient(circle at 50% 50%, rgba(243, 241, 236, 0.8) 0%, transparent 100%);
+  }
+
+  :root.dark body {
+    background-image: 
+      radial-gradient(circle at 50% 50%, rgba(31, 31, 34, 0.8) 0%, transparent 100%);
   }
 }
 
 @layer utilities {
   .sys-panel {
-    @apply bg-sys-navy border border-sys-blue relative;
+    @apply bg-sys-navy border border-sys-blue relative transition-colors duration-300;
     border-radius: 4px;
-    box-shadow: inset 0 0 40px rgba(2, 4, 8, 0.8);
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.03);
+  }
+  :root.dark .sys-panel {
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.4);
   }
 
   .sys-panel-chamfered {
@@ -75,7 +94,7 @@
   }
   
   .cyno-button:hover {
-    @apply bg-sys-blue-light text-white;
+    @apply bg-sys-blue-light text-sys-black;
   }
 
   .cyno-button::before {

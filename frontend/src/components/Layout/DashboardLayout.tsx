@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '../Sidebar/Sidebar';
-import { Database, Search } from 'lucide-react';
+import { Database, Search, Moon, Sun } from 'lucide-react';
 import type { ViewType } from '../../App';
 
 interface DashboardLayoutProps {
@@ -10,8 +10,17 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, currentView, setCurrentView }: DashboardLayoutProps) {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return document.documentElement.classList.contains('dark');
+  });
+
+  const toggleTheme = () => {
+    const isDark = document.documentElement.classList.toggle('dark');
+    setIsDarkMode(isDark);
+  };
+
   return (
-    <div className="min-h-screen bg-sys-black text-sys-text font-sans flex">
+    <div className="min-h-screen bg-sys-black text-sys-text font-sans flex transition-colors duration-300">
       {/* Sidebar */}
       <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
 
@@ -19,7 +28,7 @@ export function DashboardLayout({ children, currentView, setCurrentView }: Dashb
       <main className="flex-1 ml-[300px] min-h-screen flex flex-col relative z-10">
 
         {/* Top Header */}
-        <header className="h-[88px] flex items-center justify-between px-10 border-b-2 border-sys-navy bg-sys-black/90 backdrop-blur-md sticky top-0 z-30">
+        <header className="h-[88px] flex items-center justify-between px-10 border-b-2 border-sys-navy bg-sys-black/90 backdrop-blur-md sticky top-0 z-30 transition-colors duration-300">
           <div className="flex items-center w-[400px] relative">
             <Search className="w-5 h-5 text-sys-muted absolute left-4" />
             <input
@@ -30,13 +39,21 @@ export function DashboardLayout({ children, currentView, setCurrentView }: Dashb
           </div>
 
           <div className="flex items-center space-x-8">
+            <button 
+              onClick={toggleTheme}
+              className="w-10 h-10 flex items-center justify-center rounded-[4px] border-2 border-sys-blue text-sys-muted hover:text-sys-accent hover:border-sys-accent transition-colors"
+              title="Toggle Theme"
+            >
+              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+          
             <div className="flex flex-col items-end border-r-2 border-sys-navy pr-8 hidden md:flex">
               <span className="text-xs text-sys-muted font-bold tracking-widest uppercase">Network Status</span>
               <span className="text-sm text-sys-accent font-mono tracking-widest font-bold">ONLINE / SECURE</span>
             </div>
 
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 rounded-full bg-sys-navy border-2 border-sys-blue flex items-center justify-center">
+              <div className="w-10 h-10 rounded-[4px] bg-sys-navy border-2 border-sys-blue flex items-center justify-center">
                 <Database className="w-5 h-5 text-sys-accent" />
               </div>
               <div className="flex flex-col">
@@ -48,7 +65,7 @@ export function DashboardLayout({ children, currentView, setCurrentView }: Dashb
         </header>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-10 z-10 relative hide-scrollbar bg-[#090d16]">
+        <div className="flex-1 overflow-y-auto p-10 z-10 relative hide-scrollbar bg-transparent">
           <div className="max-w-[1600px] mx-auto">
             {children}
           </div>
