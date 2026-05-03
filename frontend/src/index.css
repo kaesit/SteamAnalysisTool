@@ -33,12 +33,12 @@
     @apply bg-sys-black text-sys-text font-sans antialiased selection:bg-sys-blue/10 selection:text-sys-text transition-colors duration-300;
     margin: 0;
     overflow-x: hidden;
-    background-image: 
+    background-image:
       radial-gradient(circle at 50% 50%, rgba(243, 241, 236, 0.8) 0%, transparent 100%);
   }
 
   :root.dark body {
-    background-image: 
+    background-image:
       radial-gradient(circle at 50% 50%, rgba(31, 31, 34, 0.8) 0%, transparent 100%);
   }
 }
@@ -49,38 +49,37 @@
     border-radius: 4px;
     box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.03);
   }
+
   :root.dark .sys-panel {
     box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.4);
   }
 
   .sys-panel-chamfered {
     @apply bg-sys-navy relative;
-    clip-path: polygon(
-      16px 0, 100% 0, 
-      100% calc(100% - 16px), calc(100% - 16px) 100%, 
-      0 100%, 0 16px
-    );
+    clip-path: polygon(16px 0, 100% 0,
+        100% calc(100% - 16px), calc(100% - 16px) 100%,
+        0 100%, 0 16px);
     padding: 1px;
   }
-  
+
   .sys-panel-inner {
     @apply bg-sys-black h-full w-full;
-    clip-path: polygon(
-      15px 0, 100% 0, 
-      100% calc(100% - 15px), calc(100% - 15px) 100%, 
-      0 100%, 0 15px
-    );
+    clip-path: polygon(15px 0, 100% 0,
+        100% calc(100% - 15px), calc(100% - 15px) 100%,
+        0 100%, 0 15px);
   }
 
   .cyno-panel {
     @apply bg-sys-black relative z-0;
     clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
   }
+
   .cyno-panel::before {
     content: '';
     @apply absolute inset-0 bg-sys-blue z-[-1];
     clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
   }
+
   .cyno-panel::after {
     content: '';
     @apply absolute bg-sys-navy z-[-1];
@@ -92,7 +91,7 @@
     @apply relative bg-sys-blue text-sys-text font-bold uppercase tracking-widest text-xs px-6 py-3 transition-all duration-200 z-0;
     clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
   }
-  
+
   .cyno-button:hover {
     @apply bg-sys-blue-light text-sys-black;
   }
@@ -109,14 +108,15 @@
     inset: 1px;
     clip-path: polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px);
   }
-  
+
   .cyno-button:hover::after {
-    @apply bg-sys-blue;
+    @apply bg-sys-text;
   }
 
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
