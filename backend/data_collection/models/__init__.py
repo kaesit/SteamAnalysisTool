@@ -9,6 +9,7 @@ from .game_data import (
     SteamReview,
     SteamSpyData,
     ProcessedGameRecord,
+    IgdbGameEnrichment,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "SteamReview",
     "SteamSpyData",
     "ProcessedGameRecord",
+    "IgdbGameEnrichment",
 ]

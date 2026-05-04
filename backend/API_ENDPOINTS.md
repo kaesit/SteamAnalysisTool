@@ -18,7 +18,24 @@ Currently, no authentication is required. All endpoints are public.
 
 - Steam API: 1.5 seconds between requests
 - SteamSpy API: 1.5 seconds between requests
+- IGDB API: ~0.35 seconds between requests (light client-side throttle)
 - Batch operations: Maximum 10 games per request
+
+## IGDB (isteğe bağlı zenginleştirme)
+
+Toplama hattı, Steam `app_id` ile IGDB `external_games` (`external_game_source` = Steam, `uid` = app_id) eşlemesi yaparak özet, temalar, platformlar ve IGDB puan alanlarını yorum/özet DataFrame'lerine ekler.
+
+Ortam değişkenleri ([IGDB dokümantasyonu](https://api-docs.igdb.com/#authentication)):
+
+| Değişken | Açıklama |
+|----------|----------|
+| `TWITCH_CLIENT_ID` | Twitch Developer uygulaması Client ID (zorunlu) |
+| `TWITCH_CLIENT_SECRET` | Uygulama gizli anahtarı; `client_credentials` ile token almak için |
+| `TWITCH_ACCESS_TOKEN` | Bearer token; secret kullanmıyorsanız doğrudan bu değeri verin |
+
+`TWITCH_CLIENT_ID` yoksa veya ne secret ne de token yoksa IGDB adımı atlanır; Steam + SteamSpy akışı aynen çalışır.
+
+**GET** `/api/info` yanıtındaki `igdb_enrichment_enabled` alanı, sunucuda IGDB çağrısı yapılıp yapılamayacağını gösterir.
 
 ---
 

@@ -2,6 +2,13 @@
 
 import logging
 from typing import Optional
+
+try:
+    from dotenv_loader import load_backend_env
+
+    load_backend_env()
+except ImportError:
+    pass
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
@@ -346,13 +353,16 @@ def api_info():
             "Steam game search by title",
             "Review data collection with sentiment analysis",
             "Market analytics (price, estimated players, ratings)",
+            "Optional IGDB metadata enrichment when TWITCH_* credentials are set",
             "Text cleaning and normalization",
             "Batch processing of multiple games",
             "AI-ready DataFrame export"
         ],
+        "igdb_enrichment_enabled": pipeline.igdb_client.is_configured(),
         "rate_limits": {
             "steam_api": "1.5 seconds between requests",
             "steamspy_api": "1.5 seconds between requests",
+            "igdb_api": "~0.35 seconds between requests (client-side throttle)",
             "batch_max_games": 10
         }
     }

@@ -1,5 +1,7 @@
 """Integration tests for data collection pipeline."""
 
+import re
+
 import pytest
 from data_collection import GameOraclePipeline
 
@@ -17,6 +19,7 @@ class TestGameOraclePipeline:
         """Test pipeline initializes with all clients."""
         assert pipeline.steam_client is not None
         assert pipeline.steamspy_client is not None
+        assert pipeline.igdb_client is not None
         assert pipeline.data_processor is not None
 
     def test_search_game_by_name(self, pipeline):
@@ -98,12 +101,13 @@ class TestGameOraclePipeline:
         assert len(games_collected) >= 1
 
     def test_collect_single_nonexistent_game(self, pipeline):
-        """Test collecting data for non-existent game raises appropriate error."""
-        with pytest.raises(Exception):
-            pipeline.process_single_game(
-                title="Nonexistent Game XYZ 12345",
-                max_reviews=50
-            )
+        """Var olmayan oyun için boş DataFrame döner (istisna fırlatılmaz)."""
+        reviews_df, summary_df = pipeline.process_single_game(
+            title="Nonexistent Game XYZ 12345",
+            max_reviews=50,
+        )
+        assert reviews_df.empty
+        assert summary_df.empty
 
     def test_collect_and_process_partial_success(self, pipeline):
         """Test batch processing continues even if one game fails."""
@@ -147,33 +151,30 @@ class TestDataQuality:
         assert unique_app_ids == 1
 
     def test_positive_ratio_calculation(self, pipeline):
-        """Test that positive ratio is correctly calculated."""
-        reviews_df, summary_df = pipeline.process_single_game(
+        """Özet satırındaki positive_ratio, Steam/SteamSpy sayaçlarıyla tutarlı olmalı."""
+        _, summary_df = pipeline.process_single_game(
             title="Portal 2",
             max_reviews=20
         )
 
-        # Calculate expected positive ratio
-        positive_count = (reviews_df["sentiment_score"] == 1).sum()
-        expected_ratio = positive_count / len(reviews_df)
-
-        # Compare with summary DataFrame
-        actual_ratio = summary_df.iloc[0]["positive_ratio"]
-        assert abs(expected_ratio - actual_ratio) < 0.0001
+        row = summary_df.iloc[0]
+        total = row["total_reviews"]
+        expected_ratio = row["positive_reviews"] / total if total else 0.0
+        assert abs(row["positive_ratio"] - expected_ratio) < 0.0001
 
     def test_text_cleaning_applied(self, pipeline):
-        """Test that text cleaning is applied to reviews."""
+        """HTML benzeri etiketler temizlenmiş olmalı; `<3` gibi ifadeler serbest."""
         reviews_df, _ = pipeline.process_single_game(
             title="Portal 2",
             max_reviews=20
         )
 
-        # Check that HTML tags are removed
+        html_like = re.compile(r"<[/a-zA-Z!][^>]*>", re.IGNORECASE)
+        bbcode_like = re.compile(r"\[/?[a-zA-Z][a-zA-Z0-9]*\]")
+
         for review_text in reviews_df["review_text"]:
-            assert "<" not in review_text
-            assert ">" not in review_text
-            assert "[" not in review_text  # BBCode
-            assert "]" not in review_text
+            assert html_like.search(review_text) is None
+            assert bbcode_like.search(review_text) is None
 
     def test_review_text_not_empty(self, pipeline):
         """Test that review texts are not empty."""

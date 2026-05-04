@@ -3,7 +3,12 @@
 import pandas as pd
 import pytest
 from data_collection.processors.data_processor import DataProcessor
-from data_collection.models.game_data import SteamGameDetails, SteamSpyData, SteamReview
+from data_collection.models.game_data import (
+    SteamGameDetails,
+    SteamSpyData,
+    SteamReview,
+    IgdbGameEnrichment,
+)
 
 
 class TestDataProcessor:
@@ -84,6 +89,33 @@ class TestDataProcessor:
         assert merged["name"] == "Counter-Strike 2"
         assert merged["estimated_owners_min"] is None
         assert merged["estimated_owners_max"] is None
+
+    def test_merge_game_data_with_igdb(self, processor, sample_game_details, sample_steamspy_data):
+        """IGDB zenginleştirmesi birleşik meta sözlüğüne igdb_* alanları olarak yazılır."""
+        igdb = IgdbGameEnrichment(
+            igdb_id=100,
+            summary="IGDB özeti",
+            storyline="Kısa hikâye",
+            rating=88.0,
+            aggregated_rating=90.0,
+            total_rating=89.0,
+            first_release_date_unix=1600000000,
+            genres="FPS",
+            themes="Sci-Fi",
+            game_modes="Multiplayer",
+            platforms="PC",
+            developers="Dev",
+            publishers="Pub",
+        )
+        merged = processor.merge_game_data(
+            sample_game_details, sample_steamspy_data, igdb
+        )
+        assert merged["igdb_id"] == 100
+        assert merged["igdb_summary"] == "IGDB özeti"
+        assert merged["igdb_storyline"] == "Kısa hikâye"
+        assert merged["igdb_rating"] == 88.0
+        assert merged["igdb_genres"] == "FPS"
+        assert merged["igdb_publishers"] == "Pub"
 
     def test_build_reviews_dataframe(self, processor, sample_game_details):
         """Test building reviews DataFrame."""

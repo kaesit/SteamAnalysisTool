@@ -1,10 +1,10 @@
-"""API client modules for Steam and SteamSpy data collection.
+"""API client modules for Steam, SteamSpy ve IGDB veri toplama.
 
-This package contains HTTP client implementations for communicating with
-Steam Store API, Steam Reviews API, and SteamSpy API.
+Steam Store / Reviews, SteamSpy ve IGDB v4 istemcilerini içerir.
 """
 
 from .steam_client import SteamAPIClient
 from .steamspy_client import SteamSpyClient
+from .igdb_client import IgdbClient
 
-__all__ = ["SteamAPIClient", "SteamSpyClient"]
+__all__ = ["SteamAPIClient", "SteamSpyClient", "IgdbClient"]
