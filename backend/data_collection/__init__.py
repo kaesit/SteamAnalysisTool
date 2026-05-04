@@ -8,6 +8,7 @@ Main Components:
     - GameOraclePipeline: Main orchestrator for complete workflow
     - SteamAPIClient: Steam Store API and Reviews API client
     - SteamSpyClient: SteamSpy API client
+    - IgdbClient: IGDB v4 (Twitch kimliği) istemcisi
     - TextCleaner: Text normalization utilities
     - DataProcessor: Data merging and DataFrame building
 
@@ -26,13 +27,14 @@ Example Usage:
 """
 
 from .pipeline import GameOraclePipeline
-from .clients import SteamAPIClient, SteamSpyClient
+from .clients import SteamAPIClient, SteamSpyClient, IgdbClient
 from .processors import TextCleaner, DataProcessor
 from .models import (
     SteamGameDetails,
     SteamReview,
     SteamSpyData,
     ProcessedGameRecord,
+    IgdbGameEnrichment,
 )
 
 __version__ = "0.1.0"
@@ -42,10 +44,12 @@ __all__ = [
     "GameOraclePipeline",
     "SteamAPIClient",
     "SteamSpyClient",
+    "IgdbClient",
     "TextCleaner",
     "DataProcessor",
     "SteamGameDetails",
     "SteamReview",
     "SteamSpyData",
     "ProcessedGameRecord",
+    "IgdbGameEnrichment",
 ]

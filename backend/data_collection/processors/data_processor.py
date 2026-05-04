@@ -15,6 +15,7 @@ from ..models.game_data import (
     SteamReview,
     SteamSpyData,
     ProcessedGameRecord,
+    IgdbGameEnrichment,
 )
 from .text_cleaner import TextCleaner
 
@@ -29,21 +30,63 @@ class DataProcessor:
     """
 
     @staticmethod
+    def _default_igdb_meta() -> Dict:
+        """IGDB alanları için birleşik sözlükte kullanılan varsayılan (boş) değerleri döner."""
+        return {
+            "igdb_id": None,
+            "igdb_summary": "",
+            "igdb_storyline": "",
+            "igdb_rating": None,
+            "igdb_aggregated_rating": None,
+            "igdb_total_rating": None,
+            "igdb_first_release_date_unix": None,
+            "igdb_genres": "",
+            "igdb_themes": "",
+            "igdb_game_modes": "",
+            "igdb_platforms": "",
+            "igdb_developers": "",
+            "igdb_publishers": "",
+        }
+
+    @staticmethod
+    def _apply_igdb_enrichment(merged: Dict, igdb: Optional[IgdbGameEnrichment]) -> None:
+        """Birleşik meta sözlüğüne IGDB zenginleştirmesini yazar (yoksa varsayılanları korur)."""
+        defaults = DataProcessor._default_igdb_meta()
+        merged.update(defaults)
+        if not igdb:
+            return
+        merged["igdb_id"] = igdb.igdb_id
+        merged["igdb_summary"] = igdb.summary or ""
+        merged["igdb_storyline"] = igdb.storyline or ""
+        merged["igdb_rating"] = igdb.rating
+        merged["igdb_aggregated_rating"] = igdb.aggregated_rating
+        merged["igdb_total_rating"] = igdb.total_rating
+        merged["igdb_first_release_date_unix"] = igdb.first_release_date_unix
+        merged["igdb_genres"] = igdb.genres or ""
+        merged["igdb_themes"] = igdb.themes or ""
+        merged["igdb_game_modes"] = igdb.game_modes or ""
+        merged["igdb_platforms"] = igdb.platforms or ""
+        merged["igdb_developers"] = igdb.developers or ""
+        merged["igdb_publishers"] = igdb.publishers or ""
+
+    @staticmethod
     def merge_game_data(
         details: SteamGameDetails,
         spy_data: Optional[SteamSpyData],
+        igdb: Optional[IgdbGameEnrichment] = None,
     ) -> Dict:
-        """Merge game details from Steam and SteamSpy sources.
+        """Steam, SteamSpy ve isteğe bağlı IGDB verisini tek meta sözlüğünde birleştirir.
 
-        Resolves conflicts by preferring Steam data (as primary source),
-        fills missing fields from SteamSpy, and normalizes prices.
+        Steam birincil kaynak; SteamSpy sahiplik ve etiketleri tamamlar; IGDB ise
+        özet/hikâye, temalar ve IGDB puanlarını ekler (yapılandırma yoksa alanlar boş kalır).
 
         Args:
-            details: Game details from Steam Store API.
-            spy_data: Game data from SteamSpy API (optional).
+            details: Steam Store API oyun detayı.
+            spy_data: SteamSpy verisi (isteğe bağlı).
+            igdb: IGDB zenginleştirmesi (isteğe bağlı).
 
         Returns:
-            Merged game metadata dictionary.
+            Yorum ve özet DataFrame'lerinde kullanılacak birleşik meta sözlüğü.
         """
         logger.debug(f"Merging data for game: {details.name}")
 
@@ -73,6 +116,8 @@ class DataProcessor:
         else:
             merged["estimated_owners_min"] = None
             merged["estimated_owners_max"] = None
+
+        DataProcessor._apply_igdb_enrichment(merged, igdb)
 
         return merged
 
@@ -128,6 +173,21 @@ class DataProcessor:
                 voted_up=review.voted_up,
                 sentiment_label=sentiment_label,
                 sentiment_score=sentiment_score,
+                igdb_id=game_meta.get("igdb_id"),
+                igdb_summary=game_meta.get("igdb_summary", ""),
+                igdb_storyline=game_meta.get("igdb_storyline", ""),
+                igdb_rating=game_meta.get("igdb_rating"),
+                igdb_aggregated_rating=game_meta.get("igdb_aggregated_rating"),
+                igdb_total_rating=game_meta.get("igdb_total_rating"),
+                igdb_first_release_date_unix=game_meta.get(
+                    "igdb_first_release_date_unix"
+                ),
+                igdb_genres=game_meta.get("igdb_genres", ""),
+                igdb_themes=game_meta.get("igdb_themes", ""),
+                igdb_game_modes=game_meta.get("igdb_game_modes", ""),
+                igdb_platforms=game_meta.get("igdb_platforms", ""),
+                igdb_developers=game_meta.get("igdb_developers", ""),
+                igdb_publishers=game_meta.get("igdb_publishers", ""),
             )
 
             records.append(record.model_dump())
@@ -180,6 +240,21 @@ class DataProcessor:
             "positive_reviews": game_meta["positive_reviews"],
             "negative_reviews": game_meta["negative_reviews"],
             "positive_ratio": positive_ratio,
+            "igdb_id": game_meta.get("igdb_id"),
+            "igdb_summary": game_meta.get("igdb_summary", ""),
+            "igdb_storyline": game_meta.get("igdb_storyline", ""),
+            "igdb_rating": game_meta.get("igdb_rating"),
+            "igdb_aggregated_rating": game_meta.get("igdb_aggregated_rating"),
+            "igdb_total_rating": game_meta.get("igdb_total_rating"),
+            "igdb_first_release_date_unix": game_meta.get(
+                "igdb_first_release_date_unix"
+            ),
+            "igdb_genres": game_meta.get("igdb_genres", ""),
+            "igdb_themes": game_meta.get("igdb_themes", ""),
+            "igdb_game_modes": game_meta.get("igdb_game_modes", ""),
+            "igdb_platforms": game_meta.get("igdb_platforms", ""),
+            "igdb_developers": game_meta.get("igdb_developers", ""),
+            "igdb_publishers": game_meta.get("igdb_publishers", ""),
         }
 
         return pd.DataFrame([record])

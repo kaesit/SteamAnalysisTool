@@ -64,6 +64,45 @@ class SteamReview(BaseModel):
     model_config = {"extra": "ignore"}
 
 
+class IgdbGameEnrichment(BaseModel):
+    """IGDB üzerinden gelen, Steam kaydıyla eşleştirilmiş oyun zenginleştirme verisi.
+
+    Steam `app_id` ile IGDB `external_games` (kategori=Steam) üzerinden bağlanır;
+    özet metin, puanlar ve tematik etiketler analiz / NLP için kullanılabilir.
+
+    Attributes:
+        igdb_id: IGDB iç oyun kimliği.
+        summary: IGDB kısa özet (Steam açıklamasından bağımsız, editoryal).
+        storyline: Hikâye / senaryo özeti (varsa).
+        rating: IGDB kullanıcı puanı (0-100 ölçeğinde API değeri).
+        aggregated_rating: Toplanmış eleştiri puanı (varsa).
+        total_rating: Birleşik toplam puan (varsa).
+        first_release_date_unix: Unix zaman damgası (IGDB).
+        genres: IGDB tür isimleri (virgülle ayrılmış).
+        themes: Tema isimleri (virgülle ayrılmış).
+        game_modes: Oyun modları (tek oyunculu vb.).
+        platforms: Platform adları (virgülle ayrılmış).
+        developers: IGDB geliştirici şirket isimleri.
+        publishers: IGDB yayıncı şirket isimleri.
+    """
+
+    igdb_id: Optional[int] = None
+    summary: str = ""
+    storyline: str = ""
+    rating: Optional[float] = None
+    aggregated_rating: Optional[float] = None
+    total_rating: Optional[float] = None
+    first_release_date_unix: Optional[int] = None
+    genres: str = ""
+    themes: str = ""
+    game_modes: str = ""
+    platforms: str = ""
+    developers: str = ""
+    publishers: str = ""
+
+    model_config = {"extra": "ignore"}
+
+
 class SteamSpyData(BaseModel):
     """Validated game data from SteamSpy API.
 
@@ -122,6 +161,7 @@ class ProcessedGameRecord(BaseModel):
         voted_up: Raw binary label (True=positive, False=negative).
         sentiment_label: String label ('positive' or 'negative').
         sentiment_score: Binary score (1=positive, 0=negative).
+        igdb_*: IGDB ile zenginleştirilmiş isteğe bağlı alanlar (yapılandırma yoksa boş).
     """
 
     app_id: int
@@ -143,5 +183,18 @@ class ProcessedGameRecord(BaseModel):
     voted_up: bool = False
     sentiment_label: str = ""
     sentiment_score: int = 0
+    igdb_id: Optional[int] = None
+    igdb_summary: str = ""
+    igdb_storyline: str = ""
+    igdb_rating: Optional[float] = None
+    igdb_aggregated_rating: Optional[float] = None
+    igdb_total_rating: Optional[float] = None
+    igdb_first_release_date_unix: Optional[int] = None
+    igdb_genres: str = ""
+    igdb_themes: str = ""
+    igdb_game_modes: str = ""
+    igdb_platforms: str = ""
+    igdb_developers: str = ""
+    igdb_publishers: str = ""
 
     model_config = {"extra": "allow"}

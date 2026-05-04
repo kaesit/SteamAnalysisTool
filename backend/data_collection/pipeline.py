@@ -13,6 +13,7 @@ import pandas as pd
 
 from .clients.steam_client import SteamAPIClient
 from .clients.steamspy_client import SteamSpyClient
+from .clients.igdb_client import IgdbClient
 from .processors.data_processor import DataProcessor
 from .models.game_data import SteamGameDetails, SteamSpyData
 
@@ -22,8 +23,8 @@ logger = logging.getLogger(__name__)
 class GameOraclePipeline:
     """Main data collection and preprocessing pipeline.
 
-    Orchestrates the complete workflow: search → fetch details → fetch reviews →
-    fetch SteamSpy data → merge → clean → structure into DataFrames.
+    Orchestrates the complete workflow: search → fetch details → fetch SteamSpy →
+    isteğe bağlı IGDB zenginleştirme → fetch reviews → merge → clean → DataFrames.
 
     The pipeline is designed to be:
     - Batch-processable (multiple games in one call)
@@ -36,6 +37,7 @@ class GameOraclePipeline:
         """Initialize pipeline with API clients and processors."""
         self.steam_client = SteamAPIClient()
         self.steamspy_client = SteamSpyClient()
+        self.igdb_client = IgdbClient()
         self.data_processor = DataProcessor()
         logger.info("GameOraclePipeline initialized")
 
@@ -48,8 +50,8 @@ class GameOraclePipeline:
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """Collect and process data for multiple games.
 
-        Main entry point. Fetches data from Steam and SteamSpy for each game,
-        merges and cleans the data, and returns AI-ready DataFrames.
+        Main entry point. Steam ve SteamSpy verisini toplar; TWITCH_* ortam
+        değişkenleri tanımlıysa IGDB ile zenginleştirir, ardından DataFrame üretir.
 
         Args:
             game_titles: List of game titles to analyze.
@@ -157,8 +159,15 @@ class GameOraclePipeline:
         if not spy_data:
             logger.warning(f"SteamSpy data unavailable for app_id: {app_id}")
 
+        # Step 3b: IGDB zenginleştirme (Steam app_id ile external_games eşlemesi)
+        igdb_enrichment = self.igdb_client.fetch_enrichment_for_steam_app_id(app_id)
+        if not igdb_enrichment and self.igdb_client.is_configured():
+            logger.info("IGDB yapılandırıldı fakat bu app_id için eşleşme dönmedi")
+
         # Step 4: Merge data
-        game_meta = self.data_processor.merge_game_data(steam_details, spy_data)
+        game_meta = self.data_processor.merge_game_data(
+            steam_details, spy_data, igdb_enrichment
+        )
 
         # Step 5: Fetch reviews
         reviews = self.steam_client.get_reviews(app_id, max_reviews=max_reviews)
