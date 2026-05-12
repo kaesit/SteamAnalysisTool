@@ -463,7 +463,7 @@ export function AnalysisForm() {
             <div className="cyno-panel p-8 h-full flex flex-col items-center justify-center text-center opacity-60 min-h-[500px]">
               <Database className="w-16 h-16 text-sys-blue mb-6" />
               <p className="text-xs text-sys-muted font-bold uppercase tracking-widest leading-loose">
-                STANDBY MODE.<br />AWAITING ENTITY PARAMETERS<br />FOR NLP PROCESSING.
+                STANDBY MODE.<br />AWAITING ENTITY PARAMETERS<br />FOR PROCESSING.
               </p>
             </div>
           )}

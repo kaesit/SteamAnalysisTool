@@ -487,21 +487,33 @@ def predict_game_success(request: PredictionRequest):
             
         avg_price = sum(prices) / len(prices) if prices else 0.0
         
-        success_prob = avg_sentiment * 100.0
+        import hashlib
+        
+        # Calculate dynamic base probability mapped from sentiment
+        # SteamSpy averages are highly biased (usually 80-95%). We scale this down 
+        # so our starting probability is between 10% and 70% before modifiers.
+        base_prob = (avg_sentiment - 0.4) * 100.0
+        success_prob = max(10.0, min(70.0, base_prob))
+        
+        # Add deterministic variance based on title to make analysis responsive
+        title_hash = int(hashlib.md5(request.title.encode()).hexdigest(), 16)
+        variance = (title_hash % 100) / 10.0 - 5.0 # -5.0 to +5.0 variance
+        success_prob += variance
+        
         price_diff_percent = 0
         if avg_price > 0:
             price_diff_percent = ((request.price_usd - avg_price) / avg_price) * 100
             
         if price_diff_percent < -10:
-            price_insight = f"TARGET PRICE IS {int(price_diff_percent)}% LOWER THAN SUCCESSFUL COMPARABLES IN ACTIVE DB."
+            price_insight = f"TARGET PRICE (${request.price_usd:.2f}) IS {abs(int(price_diff_percent))}% LOWER THAN SUCCESSFUL COMPARABLES IN ACTIVE DB."
             price_status = "NOMINAL"
-            success_prob += 5
+            success_prob += 12
         elif price_diff_percent > 20:
-            price_insight = f"TARGET PRICE IS {int(price_diff_percent)}% HIGHER THAN MARKET AVERAGE (${avg_price:.2f})."
+            price_insight = f"TARGET PRICE (${request.price_usd:.2f}) IS {int(price_diff_percent)}% HIGHER THAN MARKET AVERAGE (${avg_price:.2f})."
             price_status = "WARNING"
-            success_prob -= 10
+            success_prob -= 15
         else:
-            price_insight = f"TARGET PRICE IS ALIGNED WITH MARKET AVERAGE (${avg_price:.2f})."
+            price_insight = f"TARGET PRICE (${request.price_usd:.2f}) IS ALIGNED WITH MARKET AVERAGE (${avg_price:.2f})."
             price_status = "NOMINAL"
             
         num_games = len(games)
@@ -512,7 +524,7 @@ def predict_game_success(request: PredictionRequest):
         elif avg_sentiment > 0.8:
             genre_insight = f"{primary_tag.upper()} SECTOR SHOWS HIGH PLAYER SATISFACTION ({avg_sentiment:.1%} POSITIVE). HIGH POTENTIAL."
             genre_status = "NOMINAL"
-            success_prob += 10
+            success_prob += 12
         else:
             genre_insight = f"{primary_tag.upper()} SECTOR SHOWS AVERAGE PERFORMANCE. STANDARD MARKET CONDITIONS."
             genre_status = "NOMINAL"
@@ -522,7 +534,7 @@ def predict_game_success(request: PredictionRequest):
             popular_tags = ["multiplayer", "co-op", "open world", "story rich", "atmospheric"]
             for t in tags[1:]:
                 if t.lower() in popular_tags:
-                    success_prob += 3
+                    success_prob += 6
                     genre_insight += f" PRESENCE OF POPULAR TAG '{t.upper()}' IDENTIFIED. MARKET APPEAL INCREASED."
                     break
 
@@ -532,19 +544,19 @@ def predict_game_success(request: PredictionRequest):
         has_keyword = any(kw in request.title.lower() for kw in strong_keywords)
         
         if title_length < 3:
-            title_insight = "ENTITY IDENTIFIER TOO SHORT. BRAND RECOGNITION AT RISK."
+            title_insight = f"ENTITY IDENTIFIER '{request.title.upper()}' ({title_length} CHARS) TOO SHORT. BRAND RECOGNITION AT RISK."
             title_status = "WARNING"
             success_prob -= 5
         elif title_length > 30:
-            title_insight = "ENTITY IDENTIFIER EXCEEDS OPTIMAL LENGTH. MAY IMPACT DISCOVERABILITY."
+            title_insight = f"ENTITY IDENTIFIER '{request.title.upper()}' ({title_length} CHARS) EXCEEDS OPTIMAL LENGTH. MAY IMPACT DISCOVERABILITY."
             title_status = "WARNING"
             success_prob -= 2
         elif has_keyword:
-            title_insight = "IDENTIFIER CONTAINS HIGH-PERFORMING ALGORITHMIC KEYWORDS. SEARCH VISIBILITY OPTIMIZED."
+            title_insight = f"IDENTIFIER '{request.title.upper()}' CONTAINS HIGH-PERFORMING ALGORITHMIC KEYWORDS. SEARCH VISIBILITY OPTIMIZED."
             title_status = "NOMINAL"
-            success_prob += 8
+            success_prob += 10
         else:
-            title_insight = "ENTITY IDENTIFIER LENGTH AND STRUCTURE WITHIN ACCEPTABLE PARAMETERS."
+            title_insight = f"ENTITY IDENTIFIER '{request.title.upper()}' LENGTH ({title_length} CHARS) AND STRUCTURE WITHIN ACCEPTABLE PARAMETERS."
             title_status = "NOMINAL"
             success_prob += 2
             
@@ -560,11 +572,11 @@ def predict_game_success(request: PredictionRequest):
                     if month in [10, 11, 12]:
                         date_insight = "HOLIDAY WINDOW DETECTED (Q4). HIGH CONVERSION POTENTIAL BUT INCREASED COMPETITIVE NOISE."
                         date_status = "WARNING"
-                        success_prob += 5
+                        success_prob += 8
                     elif month in [6, 7, 8]:
                         date_insight = "SUMMER WINDOW DETECTED. LOWER COMPETITION EXPECTED."
                         date_status = "NOMINAL"
-                        success_prob += 2
+                        success_prob += 5
                     else:
                         date_insight = "STANDARD DEPLOYMENT WINDOW. NO SEASONAL ANOMALIES DETECTED."
                         date_status = "NOMINAL"
