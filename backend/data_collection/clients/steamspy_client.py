@@ -168,6 +168,33 @@ class SteamSpyClient:
         logger.info(f"Found {len(results)} results for '{name}' on SteamSpy")
         return results
 
+    def get_games_by_tag(self, tag: str) -> List[Dict]:
+        """Get games by a specific tag from SteamSpy.
+
+        Args:
+            tag: The genre or tag to search for (e.g. 'Action', 'RPG').
+
+        Returns:
+            List of game dictionaries matching the tag.
+        """
+        logger.info(f"Fetching games for tag: {tag}")
+        
+        params = {"request": "tag", "tag": tag}
+        response = self._request(params)
+        
+        if not response:
+            logger.warning(f"Failed to fetch games for tag: {tag}")
+            return []
+            
+        # SteamSpy request=tag returns a dictionary where keys are app_ids and values are game objects
+        if isinstance(response, dict):
+            games = list(response.values())
+            logger.info(f"Found {len(games)} games for tag: {tag}")
+            return games
+            
+        logger.warning(f"Unexpected response format for tag: {tag}")
+        return []
+
     def get_top_tags(self, app_id: int, limit: int = 5) -> List[str]:
         """Get top tags for a game from SteamSpy data.
 

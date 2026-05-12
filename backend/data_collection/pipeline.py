@@ -183,6 +183,53 @@ class GameOraclePipeline:
 
         return reviews_df, summary_df
 
+    def process_single_game_steam_only(
+        self,
+        title: str,
+        max_reviews: int = 500,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """Process a single game through the pipeline using ONLY Steam API.
+
+        Args:
+            title: Game title to search and process.
+            max_reviews: Maximum reviews to fetch.
+
+        Returns:
+            Tuple of (reviews_df, summary_df) for this game.
+        """
+        logger.info(f"Processing single game (Steam API Only): {title}")
+
+        # Step 1: Search for game
+        app_id = self.steam_client.search_game_by_name(title)
+        if not app_id:
+            logger.error(f"Could not find app_id for game: {title}")
+            return pd.DataFrame(), pd.DataFrame()
+
+        # Step 2: Fetch game details from Steam
+        steam_details = self.steam_client.get_game_details(app_id)
+        if not steam_details:
+            logger.error(f"Failed to fetch Steam details for app_id: {app_id}")
+            return pd.DataFrame(), pd.DataFrame()
+
+        # Step 3: Merge data (Passing None for SteamSpy and IGDB)
+        game_meta = self.data_processor.merge_game_data(
+            steam_details, None, None
+        )
+
+        # Step 4: Fetch reviews
+        reviews = self.steam_client.get_reviews(app_id, max_reviews=max_reviews)
+        if not reviews:
+            logger.warning(f"No reviews found for game: {title}")
+            return pd.DataFrame(), pd.DataFrame()
+
+        logger.info(f"Fetched {len(reviews)} reviews for: {title}")
+
+        # Step 5: Build DataFrames
+        reviews_df = self.data_processor.build_reviews_dataframe(reviews, game_meta)
+        summary_df = self.data_processor.build_game_summary_dataframe(game_meta)
+
+        return reviews_df, summary_df
+
     def save_dataframes(
         self,
         reviews_df: pd.DataFrame,

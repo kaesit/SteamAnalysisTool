@@ -10,6 +10,7 @@ try:
 except ImportError:
     pass
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from data_collection import GameOraclePipeline
@@ -22,6 +23,15 @@ app = FastAPI(
     title="Game Oracle API",
     description="Steam game data collection, sentiment analysis, and market analytics",
     version="1.0.0"
+)
+
+# Add CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify the exact origins e.g., ["http://localhost:5173"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 pipeline = GameOraclePipeline()
@@ -103,6 +113,28 @@ class ErrorResponse(BaseModel):
     """Error response model."""
     error: str = Field(..., description="Error message")
     status_code: int = Field(..., description="HTTP status code")
+
+
+class PredictionRequest(BaseModel):
+    """Request model for planned game prediction."""
+    title: str = Field(..., description="Planned game title")
+    classification: str = Field(..., description="Primary genre classification")
+    price_usd: float = Field(..., description="Planned financial target in USD")
+    meta_tags: str = Field(..., description="Comma-separated meta tags")
+    deployment_date: Optional[str] = Field(None, description="Estimated deployment date (YYYY-MM-DD)")
+
+class PredictionResponse(BaseModel):
+    """Response model for planned game prediction."""
+    success_probability: float = Field(..., description="Predicted success metric (0-100)")
+    price_insight: str = Field(..., description="Analysis of the planned price")
+    price_status: str = Field(..., description="NOMINAL, WARNING, CRITICAL")
+    genre_insight: str = Field(..., description="Analysis of the genre saturation and sentiment")
+    genre_status: str = Field(..., description="NOMINAL, WARNING, CRITICAL")
+    title_insight: str = Field(..., description="Analysis of the game title and keyword strength")
+    title_status: str = Field(..., description="NOMINAL, WARNING, CRITICAL")
+    date_insight: str = Field(..., description="Analysis of the deployment date")
+    date_status: str = Field(..., description="NOMINAL, WARNING, CRITICAL")
+
 
 
 # ============================================================================
@@ -244,6 +276,78 @@ def collect_game_data(request: GameDataRequest):
 
 
 # ============================================================================
+# Steam API Only Game Data Collection
+# ============================================================================
+
+@app.post(
+    "/api/games/collect-steam-only",
+    response_model=GameDataResponse,
+    tags=["Games"],
+    summary="Collect game data (Steam API Only)",
+    description="Fetch reviews and details for a single game using exclusively the Steam Web API"
+)
+def collect_game_data_steam_only(request: GameDataRequest):
+    """Collect data for a single game using only the Steam Web API.
+
+    Returns two DataFrames:
+    - reviews_df: One row per review (suitable for NLP training)
+    - summary_df: Game-level aggregates (suitable for market analysis)
+    """
+    try:
+        logger.info(f"Collecting data for game (Steam API Only): {request.title}")
+
+        reviews_df, summary_df = pipeline.process_single_game_steam_only(
+            title=request.title,
+            max_reviews=request.max_reviews
+        )
+
+        if reviews_df.empty:
+            logger.warning(f"No reviews found for game: {request.title}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Game not found or no reviews available: {request.title}"
+            )
+
+        # Calculate metrics
+        total_reviews = len(reviews_df)
+        positive_count = (reviews_df['sentiment_score'] == 1).sum()
+        positive_ratio = positive_count / total_reviews if total_reviews > 0 else 0
+
+        logger.info(
+            f"Successfully collected {total_reviews} reviews "
+            f"({positive_ratio:.1%} positive) for {request.title}"
+        )
+
+        return GameDataResponse(
+            status="success",
+            reviews_info=DataFrameInfo(
+                row_count=len(reviews_df),
+                column_count=len(reviews_df.columns),
+                columns=reviews_df.columns.tolist(),
+                shape=(len(reviews_df), len(reviews_df.columns))
+            ),
+            summary_info=DataFrameInfo(
+                row_count=len(summary_df),
+                column_count=len(summary_df.columns),
+                columns=summary_df.columns.tolist(),
+                shape=(len(summary_df), len(summary_df.columns))
+            ),
+            total_reviews_collected=total_reviews,
+            positive_ratio=positive_ratio,
+            message=f"Successfully collected data for {request.title} (Steam API Only)"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Data collection error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Data collection failed: {str(e)}"
+        )
+
+
+# ============================================================================
 # Batch Game Data Collection
 # ============================================================================
 
@@ -323,6 +427,171 @@ def collect_batch_data(request: BatchGameRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Batch collection failed: {str(e)}"
+        )
+
+
+# ============================================================================
+# API Information
+# ============================================================================
+
+@app.post(
+    "/api/analysis/predict",
+    response_model=PredictionResponse,
+    tags=["Analysis"],
+    summary="Predict success of a planned game",
+    description="Analyze potential success using genre tags and planned price"
+)
+def predict_game_success(request: PredictionRequest):
+    try:
+        logger.info(f"Predicting success for planned game: {request.title}")
+        
+        tags = [t.strip() for t in request.meta_tags.split(",") if t.strip()]
+        primary_tag = tags[0] if tags else request.classification
+        
+        logger.info(f"Using primary tag for analysis: {primary_tag}")
+        
+        games = pipeline.steamspy_client.get_games_by_tag(primary_tag)
+        
+        if not games:
+            games = pipeline.steamspy_client.get_games_by_tag(request.classification)
+            
+        if not games:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Could not find sufficient market data for tag: {primary_tag}"
+            )
+            
+        total_positive = 0
+        total_reviews = 0
+        prices = []
+        
+        for g in games:
+            pos = g.get('positive', 0)
+            neg = g.get('negative', 0)
+            total_positive += pos
+            total_reviews += (pos + neg)
+            
+            price_val = g.get('price', 0)
+            try:
+                price_cents = int(price_val)
+            except (ValueError, TypeError):
+                price_cents = 0
+                
+            if int(price_cents) > 0:
+                prices.append(price_cents / 100.0)
+                
+        if total_reviews == 0:
+            avg_sentiment = 0.5
+        else:
+            avg_sentiment = total_positive / total_reviews
+            
+        avg_price = sum(prices) / len(prices) if prices else 0.0
+        
+        success_prob = avg_sentiment * 100.0
+        price_diff_percent = 0
+        if avg_price > 0:
+            price_diff_percent = ((request.price_usd - avg_price) / avg_price) * 100
+            
+        if price_diff_percent < -10:
+            price_insight = f"TARGET PRICE IS {int(price_diff_percent)}% LOWER THAN SUCCESSFUL COMPARABLES IN ACTIVE DB."
+            price_status = "NOMINAL"
+            success_prob += 5
+        elif price_diff_percent > 20:
+            price_insight = f"TARGET PRICE IS {int(price_diff_percent)}% HIGHER THAN MARKET AVERAGE (${avg_price:.2f})."
+            price_status = "WARNING"
+            success_prob -= 10
+        else:
+            price_insight = f"TARGET PRICE IS ALIGNED WITH MARKET AVERAGE (${avg_price:.2f})."
+            price_status = "NOMINAL"
+            
+        num_games = len(games)
+        if num_games > 1000 and avg_sentiment < 0.7:
+            genre_insight = f"{primary_tag.upper()} SECTOR HIGHLY SATURATED WITH LOW SENTIMENT. UNIQUE SELLING PROPOSITION REQUIRED."
+            genre_status = "CRITICAL"
+            success_prob -= 15
+        elif avg_sentiment > 0.8:
+            genre_insight = f"{primary_tag.upper()} SECTOR SHOWS HIGH PLAYER SATISFACTION ({avg_sentiment:.1%} POSITIVE). HIGH POTENTIAL."
+            genre_status = "NOMINAL"
+            success_prob += 10
+        else:
+            genre_insight = f"{primary_tag.upper()} SECTOR SHOWS AVERAGE PERFORMANCE. STANDARD MARKET CONDITIONS."
+            genre_status = "NOMINAL"
+            
+        # Secondary Tags Analysis
+        if len(tags) > 1:
+            popular_tags = ["multiplayer", "co-op", "open world", "story rich", "atmospheric"]
+            for t in tags[1:]:
+                if t.lower() in popular_tags:
+                    success_prob += 3
+                    genre_insight += f" PRESENCE OF POPULAR TAG '{t.upper()}' IDENTIFIED. MARKET APPEAL INCREASED."
+                    break
+
+        # Title Analysis
+        title_length = len(request.title)
+        strong_keywords = ["simulator", "tycoon", "survivors", "manager", "idle", "rpg", "zombie", "craft"]
+        has_keyword = any(kw in request.title.lower() for kw in strong_keywords)
+        
+        if title_length < 3:
+            title_insight = "ENTITY IDENTIFIER TOO SHORT. BRAND RECOGNITION AT RISK."
+            title_status = "WARNING"
+            success_prob -= 5
+        elif title_length > 30:
+            title_insight = "ENTITY IDENTIFIER EXCEEDS OPTIMAL LENGTH. MAY IMPACT DISCOVERABILITY."
+            title_status = "WARNING"
+            success_prob -= 2
+        elif has_keyword:
+            title_insight = "IDENTIFIER CONTAINS HIGH-PERFORMING ALGORITHMIC KEYWORDS. SEARCH VISIBILITY OPTIMIZED."
+            title_status = "NOMINAL"
+            success_prob += 8
+        else:
+            title_insight = "ENTITY IDENTIFIER LENGTH AND STRUCTURE WITHIN ACCEPTABLE PARAMETERS."
+            title_status = "NOMINAL"
+            success_prob += 2
+            
+        # Date Analysis
+        date_insight = "DEPLOYMENT WINDOW NOT SPECIFIED. DEFAULT PROJECTIONS APPLIED."
+        date_status = "WARNING"
+        if request.deployment_date:
+            try:
+                # Expecting YYYY-MM-DD
+                parts = request.deployment_date.split("-")
+                if len(parts) == 3:
+                    month = int(parts[1])
+                    if month in [10, 11, 12]:
+                        date_insight = "HOLIDAY WINDOW DETECTED (Q4). HIGH CONVERSION POTENTIAL BUT INCREASED COMPETITIVE NOISE."
+                        date_status = "WARNING"
+                        success_prob += 5
+                    elif month in [6, 7, 8]:
+                        date_insight = "SUMMER WINDOW DETECTED. LOWER COMPETITION EXPECTED."
+                        date_status = "NOMINAL"
+                        success_prob += 2
+                    else:
+                        date_insight = "STANDARD DEPLOYMENT WINDOW. NO SEASONAL ANOMALIES DETECTED."
+                        date_status = "NOMINAL"
+            except Exception:
+                pass
+            
+        success_prob = max(1.0, min(99.9, success_prob))
+            
+        return PredictionResponse(
+            success_probability=round(success_prob, 1),
+            price_insight=price_insight,
+            price_status=price_status,
+            genre_insight=genre_insight,
+            genre_status=genre_status,
+            title_insight=title_insight,
+            title_status=title_status,
+            date_insight=date_insight,
+            date_status=date_status
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Prediction error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Prediction failed: {str(e)}"
         )
 
 

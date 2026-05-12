@@ -1,4 +1,4 @@
-import { LayoutDashboard, PlusCircle, FileText, BarChart3, Database } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, FileText, BarChart3, Database, Server } from 'lucide-react';
 import type { ViewType } from '../../App';
 
 interface SidebarProps {
@@ -10,6 +10,7 @@ export function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const menuItems = [
     { id: 'overview', label: 'SECTOR OVERVIEW', icon: LayoutDashboard },
     { id: 'analysis', label: 'NEW ANALYSIS UPLINK', icon: PlusCircle },
+    { id: 'steam-analysis', label: 'STEAM API ANALYSIS', icon: Server },
     { id: 'reports', label: 'DATATERMINALS', icon: FileText },
     { id: 'market', label: 'MARKET TELEMETRY', icon: BarChart3 },
     { id: 'data', label: 'SECURE NODES', icon: Database },
