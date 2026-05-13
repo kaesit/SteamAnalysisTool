@@ -1,41 +1,67 @@
-# Game Oracle API - Endpoint Documentation
+# Game Oracle API Documentation
 
 ## Overview
 
-The Game Oracle API provides RESTful endpoints for Steam game data collection, sentiment analysis, and market analytics. The API integrates the data collection module with FastAPI for easy access to game data, reviews, and market insights.
+The Game Oracle API helps you get game data from Steam. You can search for games, collect reviews, and analyze market data.
 
-## Base URL
+**Base URL:** `http://localhost:8000`
 
-```
-http://localhost:8000
-```
+**Version:** 1.0.0
 
-## Authentication
+---
 
-Currently, no authentication is required. All endpoints are public.
+## Getting Started
 
-## Rate Limiting
+### What You Can Do
+
+- Search for games by name
+- Get reviews and market data for one game
+- Get data for many games at once (1-10 games)
+- Analyze game ratings, prices, and sentiment
+- Export data for AI training
+
+### Authentication
+
+No login needed. All endpoints are public.
+
+### Rate Limits
 
 - Steam API: 1.5 seconds between requests
 - SteamSpy API: 1.5 seconds between requests
 - IGDB API: ~0.35 seconds between requests (light client-side throttle)
-- Batch operations: Maximum 10 games per request
+- Batch limit: Maximum 10 games per request
 
-## IGDB (isteğe bağlı zenginleştirme)
+---
 
-Toplama hattı, Steam `app_id` ile IGDB `external_games` (`external_game_source` = Steam, `uid` = app_id) eşlemesi yaparak özet, temalar, platformlar ve IGDB puan alanlarını yorum/özet DataFrame'lerine ekler.
+## IGDB Enrichment (Optional)
 
-Ortam değişkenleri ([IGDB dokümantasyonu](https://api-docs.igdb.com/#authentication)):
+The pipeline can enrich game data with IGDB information. It matches the Steam `app_id` to IGDB using external game records (`external_game_source = Steam`). If a match is found, it adds summary, themes, platforms, and IGDB rating fields to the review and summary DataFrames.
 
-| Değişken | Açıklama |
-|----------|----------|
-| `TWITCH_CLIENT_ID` | Twitch Developer uygulaması Client ID (zorunlu) |
-| `TWITCH_CLIENT_SECRET` | Uygulama gizli anahtarı; `client_credentials` ile token almak için |
-| `TWITCH_ACCESS_TOKEN` | Bearer token; secret kullanmıyorsanız doğrudan bu değeri verin |
+### Setup
 
-`TWITCH_CLIENT_ID` yoksa veya ne secret ne de token yoksa IGDB adımı atlanır; Steam + SteamSpy akışı aynen çalışır.
+Set these environment variables to enable IGDB:
 
-**GET** `/api/info` yanıtındaki `igdb_enrichment_enabled` alanı, sunucuda IGDB çağrısı yapılıp yapılamayacağını gösterir.
+| Variable | Description |
+|----------|-------------|
+| `TWITCH_CLIENT_ID` | Twitch Developer app Client ID (required) |
+| `TWITCH_CLIENT_SECRET` | App secret key — used to get a token via `client_credentials` |
+| `TWITCH_ACCESS_TOKEN` | Bearer token — use this if you don't provide the secret |
+
+If `TWITCH_CLIENT_ID` is missing, or if neither secret nor token is provided, the IGDB step is skipped. Steam + SteamSpy data collection continues normally.
+
+You can check if IGDB is active by looking at the `igdb_enrichment_enabled` field in the `GET /api/info` response.
+
+---
+
+## Quick Reference
+
+| Method | Endpoint | What It Does |
+|--------|----------|--------------|
+| GET | `/health` | Check if API is running |
+| GET | `/api/info` | Get API metadata |
+| POST | `/api/games/search` | Search for a game by name |
+| POST | `/api/games/collect` | Get data for one game |
+| POST | `/api/games/collect-batch` | Get data for 1-10 games |
 
 ---
 
@@ -43,9 +69,14 @@ Ortam değişkenleri ([IGDB dokümantasyonu](https://api-docs.igdb.com/#authenti
 
 ### 1. Health Check
 
-**GET** `/health`
+Check if the API is running.
 
-Verify the API is running and healthy.
+**Request:**
+```
+GET /health
+```
+
+**Status Code:** 200
 
 **Response:**
 ```json
@@ -56,15 +87,265 @@ Verify the API is running and healthy.
 }
 ```
 
+---
+
+### 2. Search for a Game
+
+Find a game on Steam by title.
+
+**Request:**
+```
+POST /api/games/search
+```
+
+**Request Body (JSON):**
+```json
+{
+  "query": "Portal 2"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| query | string | Yes | Game title or partial name |
+
 **Status Code:** 200
+
+**Response (Game Found):**
+```json
+{
+  "found": true,
+  "game_title": "Portal 2",
+  "app_id": 620
+}
+```
+
+**Response (Game Not Found):**
+```json
+{
+  "found": false,
+  "game_title": null,
+  "app_id": null
+}
+```
+
+**Errors:**
+- Status 500: Internal server error during search
+
+**Example:**
+```bash
+curl -X POST http://localhost:8000/api/games/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Portal 2"}'
+```
 
 ---
 
-### 2. API Information
+### 3. Collect Data for One Game
 
-**GET** `/api/info`
+Get reviews and market data for a single game. Returns two datasets: reviews (one row per review) and summary (one row per game).
 
-Get comprehensive API metadata and available endpoints.
+**Request:**
+```
+POST /api/games/collect
+```
+
+**Request Body (JSON):**
+```json
+{
+  "title": "Portal 2",
+  "max_reviews": 200
+}
+```
+
+| Field | Type | Required | Default | Range | Description |
+|-------|------|----------|---------|-------|-------------|
+| title | string | Yes | - | - | Game title to search for |
+| max_reviews | integer | No | 500 | 10-5000 | Maximum number of reviews to fetch |
+
+**Status Code:** 200
+
+**Response:**
+```json
+{
+  "status": "success",
+  "total_reviews_collected": 46,
+  "positive_ratio": 0.9565,
+  "reviews_info": {
+    "row_count": 46,
+    "column_count": 19,
+    "columns": [
+      "app_id", "name", "developer", "publisher", "price_usd",
+      "genres", "tags", "categories", "release_date",
+      "supported_languages_count", "estimated_owners_min",
+      "estimated_owners_max", "positive_reviews", "negative_reviews",
+      "review_id", "review_text", "voted_up", "sentiment_label",
+      "sentiment_score"
+    ],
+    "shape": [46, 19]
+  },
+  "summary_info": {
+    "row_count": 1,
+    "column_count": 14,
+    "columns": [
+      "app_id", "name", "developer", "publisher", "price_usd",
+      "genres", "tags", "release_date", "estimated_owners_min",
+      "estimated_owners_max", "total_reviews", "positive_reviews",
+      "negative_reviews", "positive_ratio"
+    ],
+    "shape": [1, 14]
+  },
+  "message": "Successfully collected data for Portal 2"
+}
+```
+
+**reviews_df Columns (One Row Per Review):**
+
+| Column | Type | Description |
+|--------|------|-------------|
+| app_id | integer | Steam application ID |
+| name | string | Game title |
+| developer | string | Developer name |
+| publisher | string | Publisher name |
+| price_usd | float | Price in US dollars |
+| genres | string | Comma-separated genres |
+| tags | string | Comma-separated game tags |
+| categories | string | Comma-separated categories |
+| release_date | string | Game release date |
+| supported_languages_count | integer | Number of supported languages |
+| estimated_owners_min | integer | Minimum estimated players |
+| estimated_owners_max | integer | Maximum estimated players |
+| positive_reviews | integer | Total positive reviews on Steam |
+| negative_reviews | integer | Total negative reviews on Steam |
+| review_id | string | Unique review identifier |
+| review_text | string | Cleaned review text (HTML removed, normalized) |
+| voted_up | boolean | True if positive review, False if negative |
+| sentiment_label | string | "positive" or "negative" |
+| sentiment_score | integer | 1 for positive, 0 for negative |
+
+**summary_df Columns (One Row Per Game):**
+
+| Column | Type | Description |
+|--------|------|-------------|
+| app_id | integer | Steam application ID |
+| name | string | Game title |
+| developer | string | Developer name |
+| publisher | string | Publisher name |
+| price_usd | float | Price in US dollars |
+| genres | string | Comma-separated genres |
+| tags | string | Comma-separated game tags |
+| release_date | string | Game release date |
+| estimated_owners_min | integer | Minimum estimated players |
+| estimated_owners_max | integer | Maximum estimated players |
+| total_reviews | integer | Number of reviews collected |
+| positive_reviews | integer | Count of positive reviews |
+| negative_reviews | integer | Count of negative reviews |
+| positive_ratio | float | Ratio of positive reviews (0-1) |
+
+**Errors:**
+- Status 404: Game not found or no reviews available
+- Status 500: Data collection error
+
+**Example:**
+```bash
+curl -X POST http://localhost:8000/api/games/collect \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Portal 2", "max_reviews": 200}'
+```
+
+---
+
+### 4. Collect Data for Multiple Games
+
+Get data for multiple games in one request. Games are processed one at a time with rate limiting. Returns combined data from all successful games.
+
+**Request:**
+```
+POST /api/games/collect-batch
+```
+
+**Request Body (JSON):**
+```json
+{
+  "game_titles": ["Portal 2", "Half-Life 2"],
+  "max_reviews_per_game": 200
+}
+```
+
+| Field | Type | Required | Default | Constraints | Description |
+|-------|------|----------|---------|-------------|-------------|
+| game_titles | array[string] | Yes | - | 1-10 items, not empty | List of game titles |
+| max_reviews_per_game | integer | No | 500 | 10-5000 | Maximum reviews per game |
+
+**Status Code:** 200
+
+**Response:**
+```json
+{
+  "status": "success",
+  "total_reviews_collected": 95,
+  "positive_ratio": 0.7474,
+  "reviews_info": {
+    "row_count": 95,
+    "column_count": 19,
+    "columns": [
+      "app_id", "name", "developer", "publisher", "price_usd",
+      "genres", "tags", "categories", "release_date",
+      "supported_languages_count", "estimated_owners_min",
+      "estimated_owners_max", "positive_reviews", "negative_reviews",
+      "review_id", "review_text", "voted_up", "sentiment_label",
+      "sentiment_score"
+    ],
+    "shape": [95, 19]
+  },
+  "summary_info": {
+    "row_count": 2,
+    "column_count": 14,
+    "columns": [
+      "app_id", "name", "developer", "publisher", "price_usd",
+      "genres", "tags", "release_date", "estimated_owners_min",
+      "estimated_owners_max", "total_reviews", "positive_reviews",
+      "negative_reviews", "positive_ratio"
+    ],
+    "shape": [2, 14]
+  },
+  "message": "Successfully collected data for 2 games"
+}
+```
+
+**Important Notes:**
+- Games are processed sequentially (not in parallel)
+- If one game fails, batch continues with remaining games
+- Results combine all successfully processed games
+- Rate limiting: ~1.5 seconds per review page
+
+**Errors:**
+- Status 400: Empty list or more than 10 games
+- Status 404: No reviews found for any game
+- Status 500: Batch collection error
+
+**Example:**
+```bash
+curl -X POST http://localhost:8000/api/games/collect-batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "game_titles": ["Portal 2", "Half-Life 2", "Dota 2"],
+    "max_reviews_per_game": 200
+  }'
+```
+
+---
+
+### 5. Get API Information
+
+Get API metadata, endpoints, and capabilities.
+
+**Request:**
+```
+GET /api/info
+```
+
+**Status Code:** 200
 
 **Response:**
 ```json
@@ -91,413 +372,206 @@ Get comprehensive API metadata and available endpoints.
     "steam_api": "1.5 seconds between requests",
     "steamspy_api": "1.5 seconds between requests",
     "batch_max_games": 10
-  }
+  },
+  "igdb_enrichment_enabled": true
 }
 ```
-
-**Status Code:** 200
-
----
-
-### 3. Game Search
-
-**POST** `/api/games/search`
-
-Search for a game on Steam by title. Returns the app_id if found.
-
-**Request Body:**
-```json
-{
-  "query": "Portal 2"
-}
-```
-
-**Request Parameters:**
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| query | string | Yes | Game title or partial name to search |
-
-**Response (Found):**
-```json
-{
-  "found": true,
-  "game_title": "Portal 2",
-  "app_id": 620
-}
-```
-
-**Response (Not Found):**
-```json
-{
-  "found": false,
-  "game_title": null,
-  "app_id": null
-}
-```
-
-**Status Code:** 200
-
-**Error Cases:**
-- `500` - Search service error
 
 **Example:**
-```bash
-curl -X POST http://localhost:8000/api/games/search \
-  -H "Content-Type: application/json" \
-  -d '{"query": "Portal 2"}'
-```
-
----
-
-### 4. Single Game Data Collection
-
-**POST** `/api/games/collect`
-
-Fetch reviews, details, and market data for a single game. Returns two DataFrames:
-- `reviews_df`: One row per review (suitable for NLP training)
-- `summary_df`: Game-level aggregates (suitable for market analysis)
-
-**Request Body:**
-```json
-{
-  "title": "Portal 2",
-  "max_reviews": 500
-}
-```
-
-**Request Parameters:**
-| Field | Type | Required | Default | Range | Description |
-|-------|------|----------|---------|-------|-------------|
-| title | string | Yes | - | - | Game title to search for |
-| max_reviews | integer | No | 500 | 10-5000 | Maximum number of reviews to fetch |
-
-**Response:**
-```json
-{
-  "status": "success",
-  "reviews_info": {
-    "row_count": 46,
-    "column_count": 19,
-    "columns": [
-      "app_id", "name", "developer", "publisher", "price_usd",
-      "genres", "tags", "categories", "release_date",
-      "supported_languages_count", "estimated_owners_min",
-      "estimated_owners_max", "positive_reviews", "negative_reviews",
-      "review_id", "review_text", "voted_up", "sentiment_label",
-      "sentiment_score"
-    ],
-    "shape": [46, 19]
-  },
-  "summary_info": {
-    "row_count": 1,
-    "column_count": 14,
-    "columns": [
-      "app_id", "name", "developer", "publisher", "price_usd",
-      "genres", "tags", "release_date", "estimated_owners_min",
-      "estimated_owners_max", "total_reviews", "positive_reviews",
-      "negative_reviews", "positive_ratio"
-    ],
-    "shape": [1, 14]
-  },
-  "total_reviews_collected": 46,
-  "positive_ratio": 0.9565217391304348,
-  "message": "Successfully collected data for Portal 2"
-}
-```
-
-**Status Code:** 200
-
-**Error Cases:**
-- `404` - Game not found or no reviews available
-- `500` - Data collection service error
-
-**DataFrame Columns:**
-
-**reviews_df** (one row per review):
-- `app_id` (int): Steam application ID
-- `name` (str): Game title
-- `developer` (str): Developer name
-- `publisher` (str): Publisher name
-- `price_usd` (float): Game price in USD
-- `genres` (str): Comma-separated genres
-- `tags` (str): Comma-separated tags
-- `categories` (str): Comma-separated categories
-- `release_date` (str): Release date
-- `supported_languages_count` (int): Number of supported languages
-- `estimated_owners_min` (int): Minimum estimated players
-- `estimated_owners_max` (int): Maximum estimated players
-- `positive_reviews` (int): Total positive reviews on Steam
-- `negative_reviews` (int): Total negative reviews on Steam
-- `review_id` (str): Unique review identifier
-- `review_text` (str): Cleaned review text (HTML removed, normalized)
-- `voted_up` (bool): Whether review was positive
-- `sentiment_label` (str): 'positive' or 'negative'
-- `sentiment_score` (int): 1 (positive) or 0 (negative)
-
-**summary_df** (one row per game):
-- `app_id` (int): Steam application ID
-- `name` (str): Game title
-- `developer` (str): Developer name
-- `publisher` (str): Publisher name
-- `price_usd` (float): Game price in USD
-- `genres` (str): Comma-separated genres
-- `tags` (str): Comma-separated tags
-- `release_date` (str): Release date
-- `estimated_owners_min` (int): Minimum estimated players
-- `estimated_owners_max` (int): Maximum estimated players
-- `total_reviews` (int): Number of reviews collected
-- `positive_reviews` (int): Count of positive reviews
-- `negative_reviews` (int): Count of negative reviews
-- `positive_ratio` (float): Ratio of positive reviews (0-1)
-
-**Example:**
-```bash
-curl -X POST http://localhost:8000/api/games/collect \
-  -H "Content-Type: application/json" \
-  -d '{"title": "Portal 2", "max_reviews": 200}'
-```
-
----
-
-### 5. Batch Game Data Collection
-
-**POST** `/api/games/collect-batch`
-
-Fetch reviews and data for multiple games in batch. Processes games sequentially with rate limiting to respect Steam API limits. Returns combined DataFrames from all successfully processed games.
-
-**Request Body:**
-```json
-{
-  "game_titles": ["Portal 2", "Half-Life 2"],
-  "max_reviews_per_game": 500
-}
-```
-
-**Request Parameters:**
-| Field | Type | Required | Default | Constraints | Description |
-|-------|------|----------|---------|-------------|-------------|
-| game_titles | array[string] | Yes | - | 1-10 items | List of game titles to process |
-| max_reviews_per_game | integer | No | 500 | 10-5000 | Maximum reviews per game |
-
-**Response:**
-```json
-{
-  "status": "success",
-  "reviews_info": {
-    "row_count": 95,
-    "column_count": 19,
-    "columns": [...],
-    "shape": [95, 19]
-  },
-  "summary_info": {
-    "row_count": 2,
-    "column_count": 14,
-    "columns": [...],
-    "shape": [2, 14]
-  },
-  "total_reviews_collected": 95,
-  "positive_ratio": 0.7473684210526316,
-  "message": "Successfully collected data for 2 games"
-}
-```
-
-**Status Code:** 200
-
-**Error Cases:**
-- `400` - Invalid request (empty list or > 10 games)
-- `404` - No reviews found for any games
-- `500` - Batch collection service error
-
-**Notes:**
-- Processing time is roughly `(total_games * avg_reviews * 1.5 seconds rate_limit) + network latency`
-- Games are processed sequentially, not in parallel
-- If one game fails, batch continues with remaining games
-- Returns combined results from all successfully processed games
-
-**Example:**
-```bash
-curl -X POST http://localhost:8000/api/games/collect-batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "game_titles": ["Portal 2", "Half-Life 2", "Dota 2"],
-    "max_reviews_per_game": 200
-  }'
-```
-
----
-
-## Response Schema
-
-### DataFrameInfo
-Metadata about a DataFrame returned by collection endpoints.
-
-```json
-{
-  "row_count": 46,
-  "column_count": 19,
-  "columns": ["app_id", "name", ...],
-  "shape": [46, 19]
-}
-```
-
-### GameDataResponse
-Response structure for data collection endpoints.
-
-```json
-{
-  "status": "success",
-  "reviews_info": {...},
-  "summary_info": {...},
-  "total_reviews_collected": 46,
-  "positive_ratio": 0.9565217391304348,
-  "message": "Success message"
-}
-```
-
-### ErrorResponse
-Standard error response structure.
-
-```json
-{
-  "detail": "Error message describing what went wrong"
-}
-```
-
----
-
-## Usage Examples
-
-### Example 1: Search for a Game
-
-```bash
-curl -X POST http://localhost:8000/api/games/search \
-  -H "Content-Type: application/json" \
-  -d '{"query": "Portal 2"}'
-```
-
-### Example 2: Collect Data for Single Game
-
-```bash
-curl -X POST http://localhost:8000/api/games/collect \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Portal 2",
-    "max_reviews": 300
-  }'
-```
-
-### Example 3: Batch Collect Multiple Games
-
-```bash
-curl -X POST http://localhost:8000/api/games/collect-batch \
-  -H "Content-Type: application/json" \
-  -d '{
-    "game_titles": [
-      "Portal 2",
-      "Half-Life 2",
-      "Dota 2"
-    ],
-    "max_reviews_per_game": 200
-  }'
-```
-
-### Example 4: Get API Information
-
 ```bash
 curl http://localhost:8000/api/info
 ```
 
 ---
 
-## Data Quality
+## Data Quality & Processing
 
-All collected data undergoes the following processing:
+All collected data undergoes these steps:
 
-1. **HTML Cleaning**: Removes HTML tags, BBCode, and special formatting
+1. **HTML Cleaning**: Removes HTML tags, BBCode formatting
 2. **Text Normalization**: Fixes whitespace, removes special characters
-3. **Sentiment Analysis**: Converts Steam's voted_up boolean to sentiment_label ('positive'/'negative') and sentiment_score (1/0)
+3. **Sentiment Analysis**: Converts Steam votes to labels and scores
 4. **Validation**: Ensures all required fields are present and valid
 
-## Performance Notes
-
-- **Review Collection**: ~1.5 seconds per page of reviews (Steam API rate limit)
-- **Search**: ~1-2 seconds per query
-- **Text Cleaning**: <1ms per review
-- **Typical Single Game**: 200-300 reviews takes 5-10 minutes
-
 ---
 
-## Common Issues & Troubleshooting
+## Common Errors & Solutions
 
-### 404 - Game Not Found
-
+### Game Not Found (404)
 **Cause:** Game doesn't exist on Steam or Steam couldn't find it.
 
-**Solution:**
-1. Try a partial title (e.g., "Portal" instead of "Portal 2")
-2. Use the game's exact Steam store title
-3. Check if game is region-locked
+**Solutions:**
+- Try a shorter game name ("Portal" instead of "Portal 2")
+- Use exact Steam store title
+- Try a different game
 
-### 500 - Data Collection Failed
+### System Error (500)
+**Cause:** Network error, Steam API unreachable, or processing error.
 
-**Cause:** Network error, Steam API issue, or data processing error.
+**Solutions:**
+- Check internet connection
+- Verify Steam API is accessible
+- Try with fewer reviews (max_reviews: 50)
+- Wait a few minutes and retry
 
-**Solution:**
-1. Check internet connection
-2. Verify Steam API is accessible
-3. Try with fewer reviews (`max_reviews: 50`)
-4. Wait a few minutes and retry (Steam rate limiting)
+### Invalid Batch Request (400)
+**Cause:** Empty game list or more than 10 games sent.
 
-### Empty Reviews Array
+**Solutions:**
+- Send 1-10 games
+- Check list is not empty
 
-**Cause:** Game exists but has no reviews (new or unpopular game).
+### No Reviews Found (404)
+**Cause:** Game exists but has no reviews or is new/unpopular.
 
-**Solution:**
-1. Try a different, more popular game
-2. Check Steam store page to confirm reviews exist
+**Solutions:**
+- Try a more popular game
+- Check Steam store page to verify reviews exist
 
 ---
 
-## Integration Notes
+## Performance & Timing
 
-### Python Integration
+**Typical response times:**
+- Search: 1-2 seconds
+- Single game (200 reviews): 5-10 minutes
+- Batch (10 games × 200 reviews): 1-2 hours
+
+**Why slow?**
+Steam API has rate limiting (1.5 seconds between requests). This is intentional to avoid overloading Steam's servers.
+
+---
+
+## HTTP Status Codes
+
+| Code | Meaning | Endpoints |
+|------|---------|-----------|
+| 200 | Success | All endpoints |
+| 400 | Invalid request | Batch (empty list or > 10 games) |
+| 404 | Not found | Search (game not found), Collect (no reviews) |
+| 500 | Server error | All endpoints |
+
+---
+
+## Integration Examples
+
+### Python
 
 ```python
 import requests
 
-# Single game collection
-response = requests.post(
-    'http://localhost:8000/api/games/collect',
+BASE_URL = 'http://localhost:8000'
+
+# Search for a game
+searchResponse = requests.post(
+    f'{BASE_URL}/api/games/search',
+    json={'query': 'Portal 2'}
+)
+game = searchResponse.json()
+print(f"Found: {game['game_title']}")
+
+# Collect single game data
+collectResponse = requests.post(
+    f'{BASE_URL}/api/games/collect',
     json={'title': 'Portal 2', 'max_reviews': 200}
 )
+data = collectResponse.json()
+print(f"Reviews: {data['total_reviews_collected']}")
+print(f"Positive: {data['positive_ratio']:.1%}")
 
-data = response.json()
-print(f"Collected {data['total_reviews_collected']} reviews")
-print(f"Positive ratio: {data['positive_ratio']:.1%}")
+# Batch collect
+batchResponse = requests.post(
+    f'{BASE_URL}/api/games/collect-batch',
+    json={'game_titles': ['Portal 2', 'Half-Life 2'], 'max_reviews_per_game': 200}
+)
+batchData = batchResponse.json()
+print(f"Total reviews: {batchData['total_reviews_collected']}")
 ```
 
-### JavaScript/Frontend Integration
+### JavaScript
 
 ```javascript
-// Single game collection
-const response = await fetch('/api/games/collect', {
+// Search for a game
+const searchResponse = await fetch('/api/games/search', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ query: 'Portal 2' })
+});
+const game = await searchResponse.json();
+console.log(game.game_title);
+
+// Collect single game data
+const collectResponse = await fetch('/api/games/collect', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ title: 'Portal 2', max_reviews: 200 })
+});
+const data = await collectResponse.json();
+console.log(`Reviews: ${data.total_reviews_collected}`);
+console.log(`Positive: ${(data.positive_ratio * 100).toFixed(1)}%`);
+
+// Batch collect
+const batchResponse = await fetch('/api/games/collect-batch', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    title: 'Portal 2',
-    max_reviews: 200
+    game_titles: ['Portal 2', 'Half-Life 2'],
+    max_reviews_per_game: 200
   })
 });
-
-const data = await response.json();
-console.log(`Collected ${data.total_reviews_collected} reviews`);
+const batchData = await batchResponse.json();
+console.log(`Total: ${batchData.total_reviews_collected}`);
 ```
 
 ---
 
-## API Documentation
+### Full Workflow Example (Python)
 
-For interactive API documentation, start the server and visit:
+```python
+import requests
+
+BASE_URL = 'http://localhost:8000'
+
+# Step 1: Search for games
+games_to_collect = ['Portal 2', 'Half-Life 2']
+game_ids = {}
+
+for game in games_to_collect:
+    response = requests.post(
+        f'{BASE_URL}/api/games/search',
+        json={'query': game}
+    )
+    result = response.json()
+    if result['found']:
+        game_ids[result['game_title']] = result['app_id']
+        print(f"✓ Found: {result['game_title']} (ID: {result['app_id']})")
+    else:
+        print(f"✗ Not found: {game}")
+
+# Step 2: Collect data for found games
+if game_ids:
+    response = requests.post(
+        f'{BASE_URL}/api/games/collect-batch',
+        json={
+            'game_titles': list(game_ids.keys()),
+            'max_reviews_per_game': 200
+        }
+    )
+    data = response.json()
+    
+    if response.status_code == 200:
+        print(f"\n✓ Collected {data['total_reviews_collected']} reviews")
+        print(f"  Positive ratio: {data['positive_ratio']:.1%}")
+        print(f"  Games: {data['summary_info']['row_count']}")
+    else:
+        print(f"✗ Error: {data.get('detail', 'Unknown error')}")
+```
+
+---
+
+## Interactive Documentation
+
+For interactive API testing:
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
 
@@ -505,4 +579,8 @@ For interactive API documentation, start the server and visit:
 
 ## Version History
 
-- **v1.0.0** (2026-04-28): Initial release with game search, single game collection, and batch collection endpoints
+- **v1.0.0** (2026-04-28): Initial release
+  - Game search by title
+  - Single game data collection
+  - Batch data collection (1-10 games)
+  - Sentiment analysis integration
